@@ -6,21 +6,23 @@
     <title>CodeRefine Pro | Enhanced Python Toolset</title>
     <style>
         :root {
-            --primary-bg: #f0f2f5;
-            --card-bg: #ffffff;
-            --editor-bg: #1e272e;
-            --text-main: #2d3436;
-            --accent-purple: #8e44ad;
-            --accent-blue: #2980b9;
-            --accent-red: #e74c3c;
-            --accent-navy: #34495e;
+            /* Vibrant Color Palette */
+            --primary-bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --editor-bg: #010409;
+            --accent-purple: #a855f7;
+            --accent-blue: #3b82f6;
+            --accent-red: #ef4444;
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--primary-bg);
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+            color: #f8fafc;
             display: flex;
             justify-content: center;
+            min-height: 100vh;
             padding: 20px;
             margin: 0;
         }
@@ -29,83 +31,72 @@
             width: 100%;
             max-width: 1000px;
             background: var(--card-bg);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(12px); /* Glassmorphism */
+            padding: 40px;
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        h2 { color: var(--text-main); margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-
-        label { font-weight: bold; color: var(--text-main); display: block; margin-bottom: 8px; }
+        h2 { 
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2rem;
+            margin-bottom: 24px;
+        }
 
         textarea {
             width: 100%;
             height: 250px;
-            padding: 15px;
-            border: 2px solid #dfe6e9;
-            border-radius: 10px;
-            font-family: 'Consolas', 'Monaco', monospace;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid var(--glass-border);
+            border-radius: 16px;
+            color: #e2e8f0;
+            font-family: 'Fira Code', 'Consolas', monospace;
             font-size: 14px;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             box-sizing: border-box;
             outline: none;
-            transition: border-color 0.3s;
+            transition: all 0.3s ease;
         }
 
-        textarea:focus { border-color: var(--accent-blue); }
+        textarea:focus { border-color: var(--accent-blue); box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
 
-        .button-row {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-        }
+        .button-row { display: flex; gap: 15px; margin-bottom: 32px; }
 
         button {
             flex: 1;
-            padding: 14px;
-            font-size: 15px;
-            font-weight: 700;
+            padding: 16px;
+            font-weight: 600;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: transform 0.2s, filter 0.2s;
         }
 
-        button:active { transform: translateY(2px); }
+        button:hover { filter: brightness(1.2); transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
 
-        .btn-refine { background-color: var(--accent-purple); }
-        .btn-clear { background-color: var(--accent-red); }
-        .btn-copy { background-color: var(--accent-navy); }
+        .btn-refine { background: linear-gradient(135deg, #7c3aed, #9333ea); }
+        .btn-clear { background: #334155; }
+        .btn-copy { background: #1e293b; border: 1px solid var(--glass-border); }
 
-        .display-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        @media (max-width: 768px) { .display-section { grid-template-columns: 1fr; } }
+        .display-section { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 
         .output-box {
             background-color: var(--editor-bg);
-            color: #dfe6e9;
-            padding: 15px;
-            border-radius: 10px;
-            min-height: 150px;
-            overflow: auto;
-            border-left: 6px solid #636e72;
+            padding: 20px;
+            border-radius: 16px;
+            min-height: 180px;
+            border-top: 4px solid #636e72;
         }
 
-        pre {
-            margin: 0;
-            font-family: 'Consolas', monospace;
-            font-size: 13px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
+        pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; font-size: 13px; }
 
-        .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; color: #636e72; }
+        .section-title { font-size: 12px; text-transform: uppercase; font-weight: 700; color: #94a3b8; margin-bottom: 12px; }
     </style>
 </head>
 <body>
@@ -113,13 +104,13 @@
 <div class="container">
     <h2>🐍 CodeRefine Pro</h2>
     
-    <label for="codeInput">Input Python Code:</label>
-    <textarea id="codeInput" placeholder="Paste your algorithms here..."></textarea>
+    <label for="codeInput" style="display:none;">Input</label>
+    <textarea id="codeInput" placeholder="Paste your Python code here..."></textarea>
     
     <div class="button-row">
-        <button class="btn-refine" onclick="process()">Refine & Enhance</button>
-        <button class="btn-clear" onclick="clearAll()">Clear All</button>
-        <button class="btn-copy" onclick="copySiteLink()">Copy Page URL</button>
+        <button id="refineBtn" class="btn-refine" onclick="process()">Refine & Enhance</button>
+        <button class="btn-clear" onclick="clearAll()">Clear</button>
+        <button class="btn-copy" onclick="copySiteLink()">Copy Magic Link</button>
     </div>
 
     <div class="display-section">
@@ -141,28 +132,27 @@
 <script>
     const API_URL = "https://hck-2026.onrender.com/refine";
 
-    function humanizeError(errMsg) {
-        if (errMsg.includes("UnterminatedString") || errMsg.includes("unterminated string literal")) {
-            return "💡 Tip: You forgot to close your quotes (\")!";
+    // 1. SINGLE-CLICK LOGIC: Load code from URL
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sharedCode = urlParams.get('code');
+        
+        if (sharedCode) {
+            document.getElementById('codeInput').value = decodeURIComponent(sharedCode);
+            // Optional: Automatically run the refinement if code is present
+            process();
         }
-        if (errMsg.includes("Parsing failed")) {
-            return "⚠️ Syntax Error: Check for typos or missing colons!";
-        }
-        return "❌ Server Message: " + errMsg;
-    }
+    });
 
-    function clearAll() {
-        document.getElementById('codeInput').value = "";
-        document.getElementById('enhancedCode').innerText = "Cleaned code will appear here...";
-        document.getElementById('outputDisplay').innerText = "Ready for analysis.";
-    }
-
+    // 2. MAGIC LINK GENERATOR
     function copySiteLink() {
-        navigator.clipboard.writeText(window.location.href).then(() => {
+        const currentCode = document.getElementById('codeInput').value;
+        const baseUrl = window.location.origin + window.location.pathname;
+        const magicLink = `${baseUrl}?code=${encodeURIComponent(currentCode)}`;
+        
+        navigator.clipboard.writeText(magicLink).then(() => {
             const report = document.getElementById('outputDisplay');
-            const oldText = report.innerText;
-            report.innerText = "✅ Link copied! Ready to share.";
-            setTimeout(() => report.innerText = oldText, 2500);
+            report.innerText = "✅ Magic Link Copied! Send this to anyone to show off your code.";
         });
     }
 
@@ -176,7 +166,7 @@
             return;
         }
 
-        report.innerText = "Processing on Render...";
+        report.innerText = "🚀 Processing on Render...";
 
         try {
             const res = await fetch(API_URL, {
@@ -192,11 +182,19 @@
                 document.getElementById('codeInput').value = data.formatted_code;
                 report.innerText = data.analysis || "Score: 10/10! PEP 8 Standards met.";
             } else {
-                report.innerText = humanizeError(data.message);
+                report.innerText = "❌ Error: " + data.message;
             }
         } catch (err) {
-            report.innerText = "🔌 Connection Error: Check if the backend is awake.";
+            report.innerText = "🔌 Connection Error: Check if the Render backend is awake.";
         }
+    }
+
+    function clearAll() {
+        document.getElementById('codeInput').value = "";
+        document.getElementById('enhancedCode').innerText = "Cleaned code will appear here...";
+        document.getElementById('outputDisplay').innerText = "Ready for analysis.";
+        // Clear the URL without reloading
+        window.history.pushState({}, document.title, window.location.pathname);
     }
 </script>
 
