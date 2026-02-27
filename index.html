@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeRefine | Python Toolset</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        h2 { color: #333; margin-top: 0; display: flex; align-items: center; gap: 10px; }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+            outline: none;
+        }
+
+        textarea:focus { border-color: #3498db; box-shadow: 0 0 5px rgba(52,152,219,0.3); }
+
+        .buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        button:active { transform: scale(0.98); }
+        button:hover { opacity: 0.9; }
+
+        .format { background-color: #27ae60; }
+        .analyze { background-color: #2980b9; }
+        .refine { background-color: #8e44ad; }
+        .clear { background-color: #e74c3c; flex: 0.5; }
+
+        .output-box {
+            background-color: #2d3436;
+            color: #dfe6e9;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border-left: 5px solid #636e72;
+        }
+
+        #outputDisplay {
+            white-space: pre-wrap;
+            margin: 0;
+            font-size: 13px;
+            font-family: 'Consolas', monospace;
+        }
+
+        h3 { color: #333; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🐍 CodeRefine</h2>
+    <textarea id="codeInput" placeholder="Paste your Python code here... (e.g., your Euclid's algorithm for HCF)"></textarea>
+    
+    <div class="buttons">
+        <button class="format" onclick="process('format')">Format Code</button>
+        <button class="analyze" onclick="process('analyze')">Analyze Errors</button>
+        <button class="refine" onclick="process('refine')">Refine All</button>
+        <button class="clear" onclick="clearAll()">Clear</button>
+    </div>
+
+    <div class="output-section">
+        <h3>Console Output:</h3>
+        <div class="output-box">
+            <pre id="outputDisplay">System ready. Waiting for input...</pre>
+        </div>
+    </div>
+</div>
+
+<script>
+    /**
+     * Clears both the input textarea and the output display.
+     */
+    function clearAll() {
+        document.getElementById('codeInput').value = "";
+        document.getElementById('outputDisplay').innerText = "System cleared. Waiting for input...";
+    }
+
+    /**
+     * Sends the code to the FastAPI backend and handles the response.
+     * @param {string} endpoint - The API endpoint to hit (format, analyze, or refine).
+     */
+    async function process(endpoint) {
+        const inputArea = document.getElementById('codeInput');
+        const code = inputArea.value;
+        const display = document.getElementById('outputDisplay');
+        
+        if (!code.trim()) {
+            display.innerText = "Error: Input is empty!";
+            return;
+        }
+
+        display.innerText = "Processing request...";
+
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code })
+            });
+            
+            const data = await response.json();
+
+            if (data.status === "success") {
+                // If the backend returns formatted code, update the textarea immediately
+                if (data.formatted_code) {
+                    inputArea.value = data.formatted_code;
+                }
+
+                // Update the status display based on which button was clicked
+                if (endpoint === 'format') {
+                    display.innerText = "Success: Code formatted to PEP 8 standards.";
+                } else if (endpoint === 'analyze') {
+                    display.innerText = data.analysis || "Pylint: No issues detected!";
+                } else {
+                    display.innerText = `--- REFINEMENT COMPLETE ---\n\n${data.analysis || "Logic check passed."}`;
+                }
+            } else {
+                display.innerText = "Server Error: " + data.message;
+            }
+        } catch (err) {
+            display.innerText = "Connection Error: Is hck.py running at http://127.0.0.1:8000?";
+            console.error(err);
+        }
+    }
+</script>
+
+</body>
+</html>
