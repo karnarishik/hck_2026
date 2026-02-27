@@ -3,203 +3,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeRefine | Professional Python Toolset</title>
+    <title>CodeRefine Pro | Enhanced Python Toolset</title>
     <style>
-        /* Modern UI Styling */
+        :root {
+            --primary-bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --editor-bg: #1e272e;
+            --text-main: #2d3436;
+            --accent-purple: #8e44ad;
+            --accent-blue: #2980b9;
+            --accent-red: #e74c3c;
+            --accent-navy: #34495e;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
+            background-color: var(--primary-bg);
             display: flex;
             justify-content: center;
-            padding: 40px;
+            padding: 20px;
             margin: 0;
         }
 
         .container {
             width: 100%;
-            max-width: 900px;
-            background: white;
+            max-width: 1000px;
+            background: var(--card-bg);
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
-        h2 { color: #333; margin-top: 0; display: flex; align-items: center; gap: 10px; }
+        h2 { color: var(--text-main); margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+
+        label { font-weight: bold; color: var(--text-main); display: block; margin-bottom: 8px; }
 
         textarea {
             width: 100%;
-            height: 300px;
+            height: 250px;
             padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            border: 2px solid #dfe6e9;
+            border-radius: 10px;
+            font-family: 'Consolas', 'Monaco', monospace;
             font-size: 14px;
-            resize: vertical;
-            box-sizing: border-box;
             margin-bottom: 20px;
+            box-sizing: border-box;
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.3s;
         }
 
-        textarea:focus { border-color: #3498db; }
+        textarea:focus { border-color: var(--accent-blue); }
 
-        .buttons {
+        .button-row {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             margin-bottom: 30px;
             flex-wrap: wrap;
         }
 
         button {
             flex: 1;
-            min-width: 110px;
-            padding: 12px;
-            font-size: 14px;
-            font-weight: bold;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 700;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
+            transition: all 0.2s;
         }
 
-        button:active { transform: scale(0.98); }
-        button:hover { opacity: 0.9; }
+        button:active { transform: translateY(2px); }
 
-        /* Button Color Palette */
-        .format { background-color: #27ae60; }
-        .analyze { background-color: #2980b9; }
-        .refine { background-color: #8e44ad; }
-        .clear { background-color: #e74c3c; }
-        .copy { background-color: #34495e; }
+        .btn-refine { background-color: var(--accent-purple); }
+        .btn-clear { background-color: var(--accent-red); }
+        .btn-copy { background-color: var(--accent-navy); }
+
+        .display-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) { .display-section { grid-template-columns: 1fr; } }
 
         .output-box {
-            background-color: #2d3436;
+            background-color: var(--editor-bg);
             color: #dfe6e9;
-            padding: 20px;
-            border-radius: 8px;
-            overflow-x: auto;
-            border-left: 5px solid #636e72;
-            min-height: 80px;
+            padding: 15px;
+            border-radius: 10px;
+            min-height: 150px;
+            overflow: auto;
+            border-left: 6px solid #636e72;
         }
 
-        #outputDisplay {
-            white-space: pre-wrap;
+        pre {
             margin: 0;
+            font-family: 'Consolas', monospace;
             font-size: 13px;
-            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
 
-        h3 { color: #333; margin-bottom: 10px; font-size: 1.1rem; }
+        .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; color: #636e72; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🐍 CodeRefine</h2>
-    <textarea id="codeInput" placeholder="Paste your Python code here... (e.g., Euclid's HCF or recursive algorithms)"></textarea>
+    <h2>🐍 CodeRefine Pro</h2>
     
-    <div class="buttons">
-        <button class="format" onclick="process('format')">Format Code</button>
-        <button class="analyze" onclick="process('analyze')">Analyze Errors</button>
-        <button class="refine" onclick="process('refine')">Refine All</button>
-        <button class="clear" onclick="clearAll()">Clear</button>
-        <button class="copy" onclick="copySiteLink()">Copy URL</button>
+    <label for="codeInput">Input Python Code:</label>
+    <textarea id="codeInput" placeholder="Paste your algorithms here..."></textarea>
+    
+    <div class="button-row">
+        <button class="btn-refine" onclick="process()">Refine & Enhance</button>
+        <button class="btn-clear" onclick="clearAll()">Clear All</button>
+        <button class="btn-copy" onclick="copySiteLink()">Copy Page URL</button>
     </div>
 
-    <div class="output-section">
-        <h3>Console Output:</h3>
-        <div class="output-box">
-            <pre id="outputDisplay">System ready. Waiting for user input...</pre>
+    <div class="display-section">
+        <div>
+            <div class="section-title">✨ Enhanced Code</div>
+            <div class="output-box" style="border-color: var(--accent-purple);">
+                <pre id="enhancedCode">Cleaned code will appear here...</pre>
+            </div>
+        </div>
+        <div>
+            <div class="section-title">📊 Quality Report</div>
+            <div class="output-box" style="border-color: var(--accent-blue);">
+                <pre id="outputDisplay">Ready for analysis.</pre>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    /**
-     * Translates technical Python/Server errors into human-friendly tips.
-     */
+    const API_URL = "https://hck-2026.onrender.com/refine";
+
     function humanizeError(errMsg) {
         if (errMsg.includes("UnterminatedString") || errMsg.includes("unterminated string literal")) {
-            return "💡 Tip: You started a string with a quote (') but forgot to close it!";
+            return "💡 Tip: You forgot to close your quotes (\")!";
         }
-        if (errMsg.includes("Parsing failed") || errMsg.includes("Cannot parse")) {
-            return "⚠️ Check your syntax! There's a typo in your code that Python doesn't understand.";
+        if (errMsg.includes("Parsing failed")) {
+            return "⚠️ Syntax Error: Check for typos or missing colons!";
         }
-        if (errMsg.includes("Connection Error") || errMsg.includes("Failed to fetch")) {
-            return "🔌 Offline: Can't reach the backend. If you just deployed, wait 60 seconds for Render to wake up!";
-        }
-        return "❌ Error: " + errMsg;
+        return "❌ Server Message: " + errMsg;
     }
 
-    /**
-     * Copies the website's URL to the clipboard for easy sharing.
-     */
+    function clearAll() {
+        document.getElementById('codeInput').value = "";
+        document.getElementById('enhancedCode').innerText = "Cleaned code will appear here...";
+        document.getElementById('outputDisplay').innerText = "Ready for analysis.";
+    }
+
     function copySiteLink() {
-        const siteUrl = window.location.href;
-        navigator.clipboard.writeText(siteUrl).then(() => {
-            const display = document.getElementById('outputDisplay');
-            const originalText = display.innerText;
-            display.innerText = "✅ Link copied to clipboard! Share it with your friends.";
-            // Reset message after 3 seconds
-            setTimeout(() => { display.innerText = originalText; }, 3000);
-        }).catch(err => {
-            alert("Could not copy link. Manually copy the address bar!");
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            const report = document.getElementById('outputDisplay');
+            const oldText = report.innerText;
+            report.innerText = "✅ Link copied! Ready to share.";
+            setTimeout(() => report.innerText = oldText, 2500);
         });
     }
 
-    /**
-     * Wipes the input and output areas.
-     */
-    function clearAll() {
-        document.getElementById('codeInput').value = "";
-        document.getElementById('outputDisplay').innerText = "System cleared. Ready for new code.";
-    }
-
-    /**
-     * Core logic: Communicates with the FastAPI backend on Render.
-     */
-    async function process(endpoint) {
-        const inputArea = document.getElementById('codeInput');
-        const code = inputArea.value;
-        const display = document.getElementById('outputDisplay');
+    async function process() {
+        const input = document.getElementById('codeInput').value;
+        const enhanced = document.getElementById('enhancedCode');
+        const report = document.getElementById('outputDisplay');
         
-        if (!code.trim()) {
-            display.innerText = "The code box is empty! Please paste your script first.";
+        if (!input.trim()) {
+            report.innerText = "Error: Input box is empty.";
             return;
         }
 
-        display.innerText = "Connecting to Render backend...";
+        report.innerText = "Processing on Render...";
 
         try {
-            // Updated to point to your live Render URL
-            const response = await fetch(`https://hck-2026.onrender.com/${endpoint}`, {
+            const res = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: code })
+                body: JSON.stringify({ code: input })
             });
             
-            const data = await response.json();
+            const data = await res.json();
 
             if (data.status === "success") {
-                // Automatically update the input area with formatted code
-                if (data.formatted_code) {
-                    inputArea.value = data.formatted_code;
-                }
-
-                if (endpoint === 'format') {
-                    display.innerText = "✨ Success: Code formatted to PEP 8 standards.";
-                } else if (endpoint === 'analyze' || endpoint === 'refine') {
-                    display.innerText = data.analysis || "✅ Pylint: Your code looks clean!";
-                }
+                enhanced.innerText = data.formatted_code;
+                document.getElementById('codeInput').value = data.formatted_code;
+                report.innerText = data.analysis || "Score: 10/10! PEP 8 Standards met.";
             } else {
-                display.innerText = humanizeError(data.message);
+                report.innerText = humanizeError(data.message);
             }
         } catch (err) {
-            display.innerText = humanizeError("Connection Error");
+            report.innerText = "🔌 Connection Error: Check if the backend is awake.";
         }
     }
 </script>
 
 </body>
-</html>>
+</html>
