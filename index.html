@@ -6,7 +6,6 @@
     <title>CodeRefine Pro | Enhanced Python Toolset</title>
     <style>
         :root {
-            /* Vibrant Color Palette */
             --primary-bg: #0f172a;
             --card-bg: rgba(30, 41, 59, 0.7);
             --editor-bg: #010409;
@@ -31,7 +30,7 @@
             width: 100%;
             max-width: 1000px;
             background: var(--card-bg);
-            backdrop-filter: blur(12px); /* Glassmorphism */
+            backdrop-filter: blur(12px);
             padding: 40px;
             border-radius: 24px;
             border: 1px solid var(--glass-border);
@@ -64,10 +63,15 @@
 
         textarea:focus { border-color: var(--accent-blue); box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
 
-        .button-row { display: flex; gap: 15px; margin-bottom: 32px; }
+        /* Updated 4-Button Grid */
+        .button-row { 
+            display: grid; 
+            grid-template-columns: 2fr 1fr 1fr 1fr; 
+            gap: 12px; 
+            margin-bottom: 32px; 
+        }
 
         button {
-            flex: 1;
             padding: 16px;
             font-weight: 600;
             color: white;
@@ -75,6 +79,7 @@
             border-radius: 12px;
             cursor: pointer;
             transition: transform 0.2s, filter 0.2s;
+            font-size: 14px;
         }
 
         button:hover { filter: brightness(1.2); transform: translateY(-2px); }
@@ -82,7 +87,8 @@
 
         .btn-refine { background: linear-gradient(135deg, #7c3aed, #9333ea); }
         .btn-clear { background: #334155; }
-        .btn-copy { background: #1e293b; border: 1px solid var(--glass-border); }
+        .btn-copy-url { background: #1e293b; border: 1px solid var(--glass-border); }
+        .btn-magic { background: #2980b9; border: 1px solid var(--glass-border); }
 
         .display-section { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 
@@ -92,9 +98,10 @@
             border-radius: 16px;
             min-height: 180px;
             border-top: 4px solid #636e72;
+            overflow-x: auto;
         }
 
-        pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; font-size: 13px; }
+        pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; font-size: 13px; color: #dfe6e9; }
 
         .section-title { font-size: 12px; text-transform: uppercase; font-weight: 700; color: #94a3b8; margin-bottom: 12px; }
     </style>
@@ -104,13 +111,13 @@
 <div class="container">
     <h2>🐍 CodeRefine Pro</h2>
     
-    <label for="codeInput" style="display:none;">Input</label>
     <textarea id="codeInput" placeholder="Paste your Python code here..."></textarea>
     
     <div class="button-row">
-        <button id="refineBtn" class="btn-refine" onclick="process()">Refine & Enhance</button>
-        <button class="btn-clear" onclick="clearAll()">Clear</button>
-        <button class="btn-copy" onclick="copySiteLink()">Copy Magic Link</button>
+        <button class="btn-refine" onclick="process()">Refine & Enhance</button>
+        <button class="btn-clear" onclick="clearAll()">Clear All</button>
+        <button class="btn-copy-url" onclick="copyPureLink()">Copy Page URL</button>
+        <button class="btn-magic" onclick="copyMagicLink()">Copy Magic Link</button>
     </div>
 
     <div class="display-section">
@@ -132,27 +139,37 @@
 <script>
     const API_URL = "https://hck-2026.onrender.com/refine";
 
-    // 1. SINGLE-CLICK LOGIC: Load code from URL
+    // Auto-load code from URL
     window.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const sharedCode = urlParams.get('code');
-        
         if (sharedCode) {
             document.getElementById('codeInput').value = decodeURIComponent(sharedCode);
-            // Optional: Automatically run the refinement if code is present
             process();
         }
     });
 
-    // 2. MAGIC LINK GENERATOR
-    function copySiteLink() {
-        const currentCode = document.getElementById('codeInput').value;
-        const baseUrl = window.location.origin + window.location.pathname;
-        const magicLink = `${baseUrl}?code=${encodeURIComponent(currentCode)}`;
-        
-        navigator.clipboard.writeText(magicLink).then(() => {
-            const report = document.getElementById('outputDisplay');
-            report.innerText = "✅ Magic Link Copied! Send this to anyone to show off your code.";
+    function humanizeError(errMsg) {
+        if (errMsg.includes("UnterminatedString") || errMsg.toLowerCase().includes("unterminated string literal")) {
+            return "💡 Tip: You forgot to close your quotes (\") or parentheses!";
+        }
+        if (errMsg.includes("Parsing failed")) {
+            return "⚠️ Syntax Error: Check for typos or incomplete lines!";
+        }
+        return "❌ Error: " + errMsg;
+    }
+
+    function copyPureLink() {
+        navigator.clipboard.writeText(window.location.origin + window.location.pathname).then(() => {
+            alert("Base Page URL copied!");
+        });
+    }
+
+    function copyMagicLink() {
+        const code = document.getElementById('codeInput').value;
+        const magicUrl = `${window.location.origin}${window.location.pathname}?code=${encodeURIComponent(code)}`;
+        navigator.clipboard.writeText(magicUrl).then(() => {
+            document.getElementById('outputDisplay').innerText = "✅ Magic Link Copied! This link will auto-load your code.";
         });
     }
 
@@ -179,13 +196,12 @@
 
             if (data.status === "success") {
                 enhanced.innerText = data.formatted_code;
-                document.getElementById('codeInput').value = data.formatted_code;
                 report.innerText = data.analysis || "Score: 10/10! PEP 8 Standards met.";
             } else {
-                report.innerText = "❌ Error: " + data.message;
+                report.innerText = humanizeError(data.message);
             }
         } catch (err) {
-            report.innerText = "🔌 Connection Error: Check if the Render backend is awake.";
+            report.innerText = "🔌 Connection Error: Check if the backend is awake.";
         }
     }
 
@@ -193,7 +209,6 @@
         document.getElementById('codeInput').value = "";
         document.getElementById('enhancedCode').innerText = "Cleaned code will appear here...";
         document.getElementById('outputDisplay').innerText = "Ready for analysis.";
-        // Clear the URL without reloading
         window.history.pushState({}, document.title, window.location.pathname);
     }
 </script>
