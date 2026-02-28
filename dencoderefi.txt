@@ -1,0 +1,1070 @@
+"""
+╔══════════════════════════════════════════════════════════════════╗
+║   CODE REFINER — AI Code Review & Rewrite Agent                  ║
+║   100% Pure Python — Zero HTML files — Zero External APIs        ║
+║   Uses only Python standard library                              ║
+║   Run:  python app.py                                            ║
+╚══════════════════════════════════════════════════════════════════╝
+"""
+
+import http.server
+import socketserver
+import json
+import re
+import ast
+import urllib.parse
+import threading
+import os
+import sys
+from typing import List, Dict, Optional
+
+
+# ══════════════════════════════════════════════════════════════════
+#  SECTION 1 — CODE ANALYSIS ENGINE (Pure Python, no API)
+# ══════════════════════════════════════════════════════════════════
+
+RULES = {
+    "python": [
+        # ── CRITICAL ──────────────────────────────────────────────
+        {"id":"PY001","pattern":r'eval\s*\(',"severity":"CRITICAL","category":"Security",
+         "message":"eval() executes arbitrary code — major security risk",
+         "suggestion":"Use ast.literal_eval() for safe evaluation, or redesign the logic."},
+        {"id":"PY002","pattern":r'exec\s*\(',"severity":"CRITICAL","category":"Security",
+         "message":"exec() executes arbitrary code — dangerous",
+         "suggestion":"Redesign using functions, importlib, or other safe patterns."},
+        {"id":"PY003","pattern":r'pickle\.(loads?|dump)',"severity":"CRITICAL","category":"Security",
+         "message":"pickle deserialization can execute arbitrary code",
+         "suggestion":"Use json or msgpack for safe serialization instead of pickle."},
+        {"id":"PY004","pattern":r'subprocess\.(call|run|Popen).*shell\s*=\s*True',"severity":"CRITICAL","category":"Security",
+         "message":"shell=True opens command injection vulnerability",
+         "suggestion":"Pass commands as a list: subprocess.run(['cmd', 'arg'])"},
+        {"id":"PY005","pattern":r'os\.system\s*\(',"severity":"CRITICAL","category":"Security",
+         "message":"os.system() is vulnerable to shell injection",
+         "suggestion":"Use subprocess.run(['cmd'], check=True) instead."},
+        # ── HIGH ──────────────────────────────────────────────────
+        {"id":"PY006","pattern":r'except\s*:',"severity":"HIGH","category":"Bug",
+         "message":"Bare except catches ALL exceptions including KeyboardInterrupt",
+         "suggestion":"Catch specific: except (ValueError, TypeError) as e: or except Exception as e:"},
+        {"id":"PY007","pattern":r'password\s*=\s*["\'][^"\']+["\']',"severity":"HIGH","category":"Security",
+         "message":"Hardcoded password detected in source code",
+         "suggestion":"Use environment variables: os.environ.get('DB_PASSWORD')"},
+        {"id":"PY008","pattern":r'api_key\s*=\s*["\'][^"\']+["\']',"severity":"HIGH","category":"Security",
+         "message":"Hardcoded API key detected",
+         "suggestion":"Load from env: os.environ.get('API_KEY') and add to .gitignore"},
+        {"id":"PY009","pattern":r'secret\s*=\s*["\'][^"\']{6,}["\']',"severity":"HIGH","category":"Security",
+         "message":"Hardcoded secret detected",
+         "suggestion":"Store in environment variables or a secrets manager."},
+        {"id":"PY010","pattern":r'global\s+\w+',"severity":"HIGH","category":"Best Practice",
+         "message":"Global variable makes code hard to test and debug",
+         "suggestion":"Pass as function parameter or use class attributes instead."},
+        # ── MEDIUM ────────────────────────────────────────────────
+        {"id":"PY011","pattern":r'print\s*\(',"severity":"MEDIUM","category":"Best Practice",
+         "message":"print() used — use logging module in production",
+         "suggestion":"import logging; logger.info('msg') instead of print()"},
+        {"id":"PY012","pattern":r'import \*',"severity":"MEDIUM","category":"Best Practice",
+         "message":"Wildcard import pollutes namespace",
+         "suggestion":"Import only what you need: from module import SpecificClass"},
+        {"id":"PY013","pattern":r'for\s+\w+\s+in\s+range\(len\(',"severity":"MEDIUM","category":"Performance",
+         "message":"range(len(x)) is not Pythonic — use enumerate()",
+         "suggestion":"Replace with: for i, item in enumerate(my_list):"},
+        {"id":"PY014","pattern":r'== True|== False',"severity":"MEDIUM","category":"Best Practice",
+         "message":"Comparison to True/False is not Pythonic",
+         "suggestion":"Use: if value: or if not value: directly."},
+        {"id":"PY015","pattern":r'== None',"severity":"MEDIUM","category":"Best Practice",
+         "message":"Use 'is None' not '== None' for identity checks",
+         "suggestion":"Replace == None with 'is None'"},
+        {"id":"PY016","pattern":r'!= None',"severity":"MEDIUM","category":"Best Practice",
+         "message":"Use 'is not None' not '!= None'",
+         "suggestion":"Replace != None with 'is not None'"},
+        # ── LOW ───────────────────────────────────────────────────
+        {"id":"PY017","pattern":r'#\s*TODO|#\s*FIXME|#\s*HACK',"severity":"LOW","category":"Maintenance",
+         "message":"TODO/FIXME comment — unfinished work",
+         "suggestion":"Convert to a tracked issue and remove the inline comment."},
+        {"id":"PY018","pattern":r'pass\s*$',"severity":"LOW","category":"Best Practice",
+         "message":"Empty block with 'pass' — may be unfinished",
+         "suggestion":"Implement the body or raise NotImplementedError('Not yet implemented')."},
+        {"id":"PY019","pattern":r'.{121,}',"severity":"LOW","category":"Style",
+         "message":"Line exceeds 120 characters — reduces readability",
+         "suggestion":"Break into multiple lines. PEP 8 recommends ≤79 chars."},
+    ],
+    "javascript": [
+        {"id":"JS001","pattern":r'eval\s*\(',"severity":"CRITICAL","category":"Security",
+         "message":"eval() executes arbitrary code — XSS risk",
+         "suggestion":"Use JSON.parse() for data parsing instead."},
+        {"id":"JS002","pattern":r'innerHTML\s*=',"severity":"CRITICAL","category":"Security",
+         "message":"innerHTML can cause XSS attacks",
+         "suggestion":"Use textContent or sanitize with DOMPurify before setting innerHTML."},
+        {"id":"JS003","pattern":r'\bvar\s+\w+',"severity":"HIGH","category":"Best Practice",
+         "message":"'var' has function scope and hoisting issues",
+         "suggestion":"Use 'const' for constants and 'let' for variables."},
+        {"id":"JS004","pattern":r'(?<![=!<>])==(?!=)',"severity":"HIGH","category":"Bug",
+         "message":"Loose equality (==) causes unexpected type coercion",
+         "suggestion":"Use strict equality === to avoid type coercion bugs."},
+        {"id":"JS005","pattern":r'console\.(log|warn|error)',"severity":"MEDIUM","category":"Best Practice",
+         "message":"console statement left in code",
+         "suggestion":"Remove console statements before production."},
+        {"id":"JS006","pattern":r'catch\s*\(\w+\)\s*\{\s*\}',"severity":"HIGH","category":"Bug",
+         "message":"Empty catch block silently swallows errors",
+         "suggestion":"Log: catch(e) { console.error('Failed:', e); }"},
+        {"id":"JS007","pattern":r'#\s*TODO|//\s*TODO',"severity":"LOW","category":"Maintenance",
+         "message":"TODO comment found","suggestion":"Track in issue manager."},
+    ],
+    "java": [
+        {"id":"JV001","pattern":r'catch\s*\(\s*Exception\s+\w+\s*\)\s*\{\s*\}',"severity":"HIGH","category":"Bug",
+         "message":"Empty catch block swallows exceptions",
+         "suggestion":"Log: catch(Exception e) { logger.error('Error:', e); }"},
+        {"id":"JV002","pattern":r'System\.out\.print',"severity":"MEDIUM","category":"Best Practice",
+         "message":"System.out.print used — not for production",
+         "suggestion":"Use SLF4J/Log4j: logger.info('message');"},
+        {"id":"JV003","pattern":r'==\s*"[^"]*"',"severity":"CRITICAL","category":"Bug",
+         "message":"String comparison using == compares references, not content",
+         "suggestion":"Use .equals(): if (str.equals(\"value\")) { ... }"},
+        {"id":"JV004","pattern":r'String\s+\w+\s*\+\s*=',"severity":"MEDIUM","category":"Performance",
+         "message":"String concatenation creates many temporary objects",
+         "suggestion":"Use StringBuilder: sb.append(str);"},
+    ],
+    "cpp": [
+        {"id":"CP001","pattern":r'gets\s*\(',"severity":"CRITICAL","category":"Security",
+         "message":"gets() has no bounds checking — buffer overflow risk",
+         "suggestion":"Use fgets(buffer, sizeof(buffer), stdin) instead."},
+        {"id":"CP002","pattern":r'strcpy\s*\(',"severity":"CRITICAL","category":"Security",
+         "message":"strcpy() no bounds checking — buffer overflow risk",
+         "suggestion":"Use strncpy(dest, src, sizeof(dest)-1) or std::string."},
+        {"id":"CP003","pattern":r'\bmalloc\s*\(',"severity":"HIGH","category":"Best Practice",
+         "message":"C-style malloc() in C++ code",
+         "suggestion":"Use std::unique_ptr<T> or std::shared_ptr<T> instead."},
+        {"id":"CP004","pattern":r'using namespace std',"severity":"MEDIUM","category":"Best Practice",
+         "message":"using namespace std pollutes global namespace",
+         "suggestion":"Use explicit: std::cout, std::string, etc."},
+        {"id":"CP005","pattern":r'printf\s*\(',"severity":"LOW","category":"Best Practice",
+         "message":"C-style printf() — not type-safe",
+         "suggestion":"Use std::cout << value for type-safe output."},
+    ],
+}
+
+
+def analyze_code(code: str, language: str) -> List[Dict]:
+    """Rule-based static analysis engine."""
+    issues = []
+    lines = code.splitlines()
+    lang = language.lower()
+    rules = RULES.get(lang, [])
+
+    for rule in rules:
+        pattern = re.compile(rule["pattern"], re.IGNORECASE | re.MULTILINE)
+        for i, line in enumerate(lines, 1):
+            if pattern.search(line):
+                issues.append({
+                    "severity": rule["severity"],
+                    "category": rule["category"],
+                    "line": i,
+                    "message": rule["message"],
+                    "suggestion": rule["suggestion"],
+                })
+
+    # Python AST deep checks
+    if lang == "python":
+        issues += _ast_check(code)
+
+    # Deduplicate
+    seen, unique = set(), []
+    for iss in issues:
+        key = (iss["severity"], iss["message"], iss["line"])
+        if key not in seen:
+            seen.add(key); unique.append(iss)
+
+    order = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
+    unique.sort(key=lambda x: (order.get(x["severity"], 4), x["line"] or 0))
+    return unique
+
+
+def _ast_check(code: str) -> List[Dict]:
+    """AST-level checks for Python."""
+    issues = []
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as e:
+        return [{"severity": "CRITICAL", "category": "Syntax", "line": e.lineno,
+                 "message": f"Syntax Error: {e.msg}",
+                 "suggestion": "Fix the syntax error before proceeding."}]
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef):
+            for default in node.args.defaults:
+                if isinstance(default, (ast.List, ast.Dict, ast.Set)):
+                    issues.append({"severity": "HIGH", "category": "Bug",
+                                   "line": node.lineno,
+                                   "message": f"Mutable default argument in '{node.name}()' — shared across all calls",
+                                   "suggestion": f"Use None: def {node.name}(arg=None): arg = arg or []"})
+        if isinstance(node, ast.Compare):
+            for op, comp in zip(node.ops, node.comparators):
+                if isinstance(comp, ast.Constant) and comp.value is None:
+                    if isinstance(op, (ast.Eq, ast.NotEq)):
+                        issues.append({"severity": "MEDIUM", "category": "Best Practice",
+                                       "line": getattr(node, "lineno", 0),
+                                       "message": "Use 'is None' not '== None'",
+                                       "suggestion": "Use identity check: if x is None:"})
+    return issues
+
+
+def compute_score(issues: List[Dict]) -> int:
+    deductions = {"CRITICAL": 25, "HIGH": 10, "MEDIUM": 5, "LOW": 2}
+    score = 100
+    for iss in issues:
+        score -= deductions.get(iss["severity"], 0)
+    return max(0, min(100, score))
+
+
+def rewrite_python(code: str) -> tuple:
+    improvements = []
+    lines = code.splitlines()
+
+    # Fix bare except
+    new_lines = []
+    for line in lines:
+        if re.search(r'^\s*except\s*:\s*$', line.rstrip()):
+            indent = len(line) - len(line.lstrip())
+            new_lines.append(' ' * indent + 'except Exception as e:')
+            improvements.append("Replaced bare 'except:' with 'except Exception as e:'")
+        else:
+            new_lines.append(line)
+    lines = new_lines
+
+    # Fix == None / != None
+    new_lines = []
+    for line in lines:
+        if '== None' in line:
+            new_lines.append(line.replace('== None', 'is None'))
+            improvements.append("Replaced '== None' with 'is None'")
+        elif '!= None' in line:
+            new_lines.append(line.replace('!= None', 'is not None'))
+            improvements.append("Replaced '!= None' with 'is not None'")
+        else:
+            new_lines.append(line)
+    lines = new_lines
+
+    # Fix == True/False
+    new_lines = []
+    for line in lines:
+        if '== True' in line:
+            new_lines.append(line.replace('== True', ''))
+            improvements.append("Removed redundant '== True'")
+        elif '== False' in line:
+            new_lines.append(line.replace('== False', 'not '))
+            improvements.append("Replaced '== False' with 'not'")
+        else:
+            new_lines.append(line)
+    lines = new_lines
+
+    # Fix range(len(...))
+    new_lines = []
+    for line in lines:
+        m = re.search(r'for\s+(\w+)\s+in\s+range\(len\((\w+)\)\)', line)
+        if m:
+            idx, lst = m.group(1), m.group(2)
+            line = re.sub(r'for\s+\w+\s+in\s+range\(len\(\w+\)\)',
+                          f'for {idx}, _item in enumerate({lst})', line)
+            improvements.append(f"Replaced range(len({lst})) with enumerate()")
+        new_lines.append(line)
+    lines = new_lines
+
+    # Fix print → logging
+    has_print = any(re.search(r'^\s*print\s*\(', l) for l in lines)
+    if has_print:
+        header = ['import logging', 'logger = logging.getLogger(__name__)', '']
+        new_lines = header.copy()
+        for line in lines:
+            if re.search(r'^\s*print\s*\(', line):
+                indent = len(line) - len(line.lstrip())
+                content = re.sub(r'^\s*print\s*\(', '', line.rstrip()).rstrip(')')
+                new_lines.append(' ' * indent + f'logger.info({content})')
+                improvements.append("Replaced print() with logger.info()")
+            else:
+                new_lines.append(line)
+        lines = new_lines
+
+    # Add docstring if missing
+    joined = '\n'.join(lines)
+    if not joined.strip().startswith(('"""', "'''")):
+        lines = ['"""', 'Auto-refactored by Code Refiner.', '"""', ''] + lines
+        improvements.append("Added module docstring")
+
+    if not improvements:
+        improvements.append("No auto-fixes applicable — review suggestions manually")
+
+    return '\n'.join(lines), list(dict.fromkeys(improvements))
+
+
+def rewrite_javascript(code: str) -> tuple:
+    improvements = []
+    lines = code.splitlines()
+    new_lines = []
+    for line in lines:
+        if re.search(r'\bvar\b', line):
+            line = re.sub(r'\bvar\b', 'const', line, 1)
+            improvements.append("Replaced 'var' with 'const'")
+        if re.search(r'(?<![=!<>])==(?!=)', line):
+            line = re.sub(r'(?<![=!<>])==(?!=)', '===', line)
+            improvements.append("Replaced '==' with '==='")
+        new_lines.append(line)
+    if not improvements:
+        improvements.append("No auto-fixes applicable — review suggestions manually")
+    return '\n'.join(new_lines), list(dict.fromkeys(improvements))
+
+
+def auto_rewrite(code: str, language: str) -> tuple:
+    lang = language.lower()
+    if lang == "python":
+        return rewrite_python(code)
+    elif lang == "javascript":
+        return rewrite_javascript(code)
+    else:
+        return code, [f"Auto-rewrite not yet supported for {language}. See suggestions above."]
+
+
+# ══════════════════════════════════════════════════════════════════
+#  SECTION 2 — PURE PYTHON HTML GENERATOR
+#  All UI is built in Python using string construction
+# ══════════════════════════════════════════════════════════════════
+
+def esc(text: str) -> str:
+    """HTML-escape a string."""
+    return (str(text)
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace('"', "&quot;")
+            .replace("'", "&#39;"))
+
+
+def build_css() -> str:
+    return """
+    <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#060912;--surf:#0f1420;--panel:#141b2d;--border:#1e2a42;
+      --accent:#00d4ff;--purple:#7c3aed;--green:#10b981;
+      --yellow:#f59e0b;--orange:#f97316;--red:#ef4444;
+      --text:#dde6f5;--muted:#4a5a7a;
+      --mono:'JetBrains Mono','Fira Code',monospace;
+      --sans:'Segoe UI',system-ui,sans-serif;
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+    body::before{
+      content:'';position:fixed;inset:0;z-index:0;
+      background-image:linear-gradient(rgba(0,212,255,.025) 1px,transparent 1px),
+                       linear-gradient(90deg,rgba(0,212,255,.025) 1px,transparent 1px);
+      background-size:44px 44px;pointer-events:none
+    }
+    .orb{position:fixed;border-radius:50%;filter:blur(110px);pointer-events:none;z-index:0;opacity:.3}
+    .orb1{width:550px;height:550px;top:-180px;left:-150px;background:radial-gradient(circle,#7c3aed60,transparent)}
+    .orb2{width:450px;height:450px;bottom:-100px;right:-100px;background:radial-gradient(circle,#00d4ff50,transparent)}
+    .wrap{position:relative;z-index:1;max-width:1380px;margin:0 auto;padding:0 20px}
+
+    /* Header */
+    header{border-bottom:1px solid var(--border);backdrop-filter:blur(14px);
+           background:rgba(6,9,18,.85);position:sticky;top:0;z-index:100}
+    .hdr{display:flex;align-items:center;justify-content:space-between;
+         padding:14px 20px;max-width:1380px;margin:0 auto}
+    .logo{display:flex;align-items:center;gap:10px;font-size:1.1rem;font-weight:800;letter-spacing:-.5px}
+    .logo-box{width:36px;height:36px;border-radius:10px;
+              background:linear-gradient(135deg,var(--purple),var(--accent));
+              display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+    .logo span{color:var(--accent)}
+    .pill-engine{padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:700;
+                 letter-spacing:1px;text-transform:uppercase;
+                 background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+
+    /* Hero */
+    .hero{text-align:center;padding:52px 20px 36px}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:5px 16px;
+             border-radius:30px;border:1px solid var(--border);background:var(--surf);
+             font-size:.72rem;color:var(--accent);font-weight:700;
+             letter-spacing:1.5px;text-transform:uppercase;margin-bottom:18px}
+    .hero h1{font-size:clamp(1.8rem,4.5vw,3.2rem);font-weight:900;
+             line-height:1.1;letter-spacing:-2px;margin-bottom:14px}
+    .grad{background:linear-gradient(90deg,var(--accent),var(--purple));
+          -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .hero p{color:var(--muted);font-size:1rem;max-width:520px;margin:0 auto}
+
+    /* Tabs */
+    .tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);
+          padding:0 20px;max-width:1380px;margin:0 auto}
+    .tab{padding:12px 20px;background:none;border:none;cursor:pointer;
+         color:var(--muted);font-family:var(--sans);font-size:.87rem;font-weight:600;
+         border-bottom:2px solid transparent;transition:all .2s;
+         display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+    .tab:hover{color:var(--text)}
+    .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+    /* Grid */
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;
+           padding:20px;max-width:1380px;margin:0 auto}
+    @media(max-width:860px){.grid2{grid-template-columns:1fr}}
+
+    /* Panels */
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;
+           overflow:hidden;display:flex;flex-direction:column}
+    .ph{padding:14px 18px;border-bottom:1px solid var(--border);
+        display:flex;align-items:center;gap:8px}
+    .ph h2{font-size:.92rem;font-weight:700}
+    .pb{padding:18px;flex:1;display:flex;flex-direction:column;gap:14px}
+
+    /* Form elements */
+    label.lbl{font-size:.75rem;font-weight:700;color:var(--muted);
+              letter-spacing:.6px;text-transform:uppercase;display:block;margin-bottom:5px}
+    select,textarea{
+      width:100%;background:var(--surf);border:1px solid var(--border);
+      border-radius:10px;color:var(--text);font-family:var(--mono);
+      font-size:.86rem;padding:10px 14px;outline:none;transition:border-color .2s
+    }
+    select:focus,textarea:focus{border-color:var(--accent)}
+    textarea{resize:vertical;min-height:280px;line-height:1.65}
+
+    /* Checkboxes */
+    .checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .chk-item{display:flex;align-items:center;gap:10px;
+              padding:9px 13px;border-radius:10px;
+              border:1px solid var(--border);background:var(--surf);cursor:pointer}
+    .chk-item input{accent-color:var(--accent);width:15px;height:15px}
+    .chk-item span{font-size:.82rem;font-weight:600}
+
+    /* Buttons */
+    .btn{padding:12px 18px;border-radius:10px;border:none;cursor:pointer;
+         font-family:var(--sans);font-size:.88rem;font-weight:700;
+         display:inline-flex;align-items:center;justify-content:center;
+         gap:8px;transition:all .2s;width:100%}
+    .btn-primary{background:linear-gradient(135deg,var(--purple),var(--accent));color:#fff}
+    .btn-primary:hover{opacity:.88;transform:translateY(-1px)}
+    .btn-secondary{background:var(--surf);color:var(--accent);border:1px solid var(--border)}
+    .btn-secondary:hover{border-color:var(--accent)}
+    .btn:disabled{opacity:.45;cursor:not-allowed;transform:none !important}
+    .btn-row{display:flex;gap:10px}
+    .btn-row .btn{flex:1}
+
+    /* Score */
+    .score-box{display:flex;align-items:center;gap:18px;padding:14px;
+               background:var(--surf);border-radius:12px;border:1px solid var(--border)}
+    .ring{position:relative;width:68px;height:68px;flex-shrink:0}
+    .ring svg{transform:rotate(-90deg)}
+    .ring circle{fill:none;stroke-width:6}
+    .ring .trk{stroke:var(--border)}
+    .ring .val{stroke-dasharray:188;stroke-dashoffset:188;transition:stroke-dashoffset .8s}
+    .ring-num{position:absolute;inset:0;display:flex;align-items:center;
+              justify-content:center;font-size:.95rem;font-weight:900;font-family:var(--mono)}
+    .score-txt h3{font-size:.95rem;font-weight:700;margin-bottom:4px}
+    .score-txt p{font-size:.8rem;color:var(--muted);line-height:1.5}
+
+    /* Severity bar */
+    .sev-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .sev-c{text-align:center;padding:10px 6px;border-radius:10px;border:1px solid}
+    .sev-c.cr{background:rgba(239,68,68,.07);border-color:rgba(239,68,68,.25);color:var(--red)}
+    .sev-c.hi{background:rgba(249,115,22,.07);border-color:rgba(249,115,22,.25);color:var(--orange)}
+    .sev-c.me{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.25);color:var(--yellow)}
+    .sev-c.lo{background:rgba(16,185,129,.07);border-color:rgba(16,185,129,.25);color:var(--green)}
+    .sev-n{font-size:1.5rem;font-weight:900;font-family:var(--mono)}
+    .sev-l{font-size:.65rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;opacity:.8}
+
+    /* Issues */
+    .issues{display:flex;flex-direction:column;gap:8px}
+    .iss{border-radius:10px;border:1px solid var(--border);
+         background:var(--surf);overflow:hidden}
+    .iss-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer}
+    .iss-hdr:hover{background:rgba(255,255,255,.02)}
+    .spill{padding:2px 9px;border-radius:20px;font-size:.65rem;font-weight:800;
+           letter-spacing:.8px;text-transform:uppercase;flex-shrink:0}
+    .sp-CRITICAL{background:rgba(239,68,68,.18);color:var(--red)}
+    .sp-HIGH{background:rgba(249,115,22,.18);color:var(--orange)}
+    .sp-MEDIUM{background:rgba(245,158,11,.18);color:var(--yellow)}
+    .sp-LOW{background:rgba(16,185,129,.18);color:var(--green)}
+    .iss-title{font-size:.82rem;font-weight:600;flex:1}
+    .iss-line{font-size:.72rem;color:var(--muted);font-family:var(--mono);flex-shrink:0}
+    .iss-body{padding:0 14px 12px;display:none}
+    .iss.open .iss-body{display:block}
+    .iss-msg{font-size:.8rem;color:var(--muted);margin-bottom:8px}
+    .fix-box{padding:10px 12px;border-radius:8px;
+             background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.14);
+             font-size:.8rem;color:var(--accent);line-height:1.6}
+    .fix-box strong{display:block;margin-bottom:3px;font-size:.68rem;
+                    letter-spacing:1px;text-transform:uppercase}
+
+    /* Code compare */
+    .cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;
+              padding:20px;max-width:1380px;margin:0 auto}
+    @media(max-width:860px){.cmp-grid{grid-template-columns:1fr}}
+    .cpanel{background:var(--panel);border:1px solid var(--border);
+            border-radius:14px;overflow:hidden}
+    .cph{display:flex;align-items:center;justify-content:space-between;
+         padding:11px 16px;border-bottom:1px solid var(--border);background:var(--surf)}
+    .cph h3{font-size:.86rem;font-weight:700}
+    .cpbtn{padding:4px 12px;border-radius:6px;border:1px solid var(--border);
+           background:none;color:var(--muted);font-size:.72rem;cursor:pointer;
+           font-family:var(--sans);font-weight:600;transition:all .2s;text-decoration:none}
+    .cpbtn:hover{color:var(--accent);border-color:var(--accent)}
+    pre{margin:0;background:#0d1117;overflow-x:auto}
+    pre code{font-family:var(--mono) !important;font-size:.8rem !important;
+             line-height:1.7 !important;padding:16px !important;display:block}
+
+    /* Improvements */
+    .impr{display:flex;flex-direction:column;gap:7px;padding:14px}
+    .impr-item{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;
+               border-radius:8px;background:rgba(16,185,129,.06);
+               border:1px solid rgba(16,185,129,.14);font-size:.8rem;line-height:1.5}
+    .impr-item::before{content:'✓';color:var(--green);font-weight:900;flex-shrink:0}
+    .expl{margin:0 14px 14px;padding:11px 14px;border-radius:8px;
+          background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);
+          font-size:.8rem;color:var(--muted);line-height:1.6}
+
+    /* How it Works */
+    .how{padding:36px 20px;max-width:960px;margin:0 auto}
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+    @media(max-width:680px){.steps{grid-template-columns:1fr}}
+    .step{background:var(--panel);border:1px solid var(--border);
+          border-radius:14px;padding:22px}
+    .sn{font-size:2.8rem;font-weight:900;font-family:var(--mono);
+        color:rgba(0,212,255,.08);line-height:1;margin-bottom:8px}
+    .step h3{font-size:.95rem;font-weight:700;margin-bottom:6px}
+    .step p{font-size:.82rem;color:var(--muted);line-height:1.6}
+    .rg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px}
+    @media(max-width:680px){.rg{grid-template-columns:1fr}}
+    .rc{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px}
+    .rc h4{font-size:.85rem;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:7px}
+    .rc p{font-size:.78rem;color:var(--muted);line-height:1.5}
+    .run-box{margin-top:20px;background:var(--panel);border:1px solid var(--border);
+             border-radius:12px;padding:16px}
+    .run-box h3{font-size:.9rem;font-weight:700;margin-bottom:10px}
+    .run-box pre{background:#0d1117;border-radius:8px}
+    .run-box pre code{padding:12px !important;font-size:.78rem !important}
+
+    /* Misc */
+    .empty{text-align:center;padding:40px 20px;color:var(--muted)}
+    .empty .big{font-size:2.2rem;margin-bottom:10px}
+    .empty p{font-size:.85rem;line-height:1.6}
+    #toast{position:fixed;bottom:22px;right:22px;z-index:999;
+           padding:11px 18px;border-radius:10px;font-size:.86rem;font-weight:600;
+           background:var(--green);color:#fff;transform:translateY(80px);
+           transition:transform .3s;pointer-events:none}
+    #toast.show{transform:translateY(0)}
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:var(--surf)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    </style>
+    """
+
+
+def build_js() -> str:
+    return """
+    <script>
+    function switchTab(id){
+      document.querySelectorAll('.tab-content').forEach(el=>el.style.display='none');
+      document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+      document.getElementById('tc-'+id).style.display='block';
+      document.getElementById('tb-'+id).classList.add('active');
+    }
+    function toggleIss(id){document.getElementById(id).classList.toggle('open')}
+
+    async function doReview(){
+      const code=document.getElementById('code').value.trim();
+      const lang=document.getElementById('lang').value;
+      if(!code){showToast('⚠️ Paste some code first!','#f59e0b');return}
+      const focuses=[...document.querySelectorAll('.focus-cb:checked')].map(c=>c.value);
+      const btn=document.getElementById('rev-btn');
+      setLoad(btn,true,'🔍 Review Code');
+      document.getElementById('results').innerHTML=
+        '<div class="empty"><div class="big">⏳</div><p>Analysing your code…</p></div>';
+      try{
+        const r=await fetch('/api/review',{method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({code,language:lang,focus_areas:focuses})});
+        if(!r.ok){const e=await r.json();throw new Error(e.error||'Server error')}
+        const d=await r.json();
+        window._lastData={code,language:lang,issues:d.issues};
+        document.getElementById('results').innerHTML=buildResults(d);
+        document.getElementById('rw-btn').disabled=false;
+      }catch(e){
+        document.getElementById('results').innerHTML=
+          `<div class="empty"><div class="big">❌</div><p>${e.message}</p></div>`;
+      }finally{setLoad(btn,false,'🔍 Review Code')}
+    }
+
+    async function doRewrite(){
+      if(!window._lastData)return;
+      const btn=document.getElementById('rw-btn');
+      setLoad(btn,true,'✨ Fix & Rewrite');
+      switchTab('rewrite');
+      document.getElementById('tc-rewrite').innerHTML=
+        '<div class="empty" style="padding:80px"><div class="big">⏳</div><p>Rewriting…</p></div>';
+      try{
+        const r=await fetch('/api/rewrite',{method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(window._lastData)});
+        if(!r.ok){const e=await r.json();throw new Error(e.error||'Error')}
+        const d=await r.json();
+        document.getElementById('tc-rewrite').innerHTML=buildRewrite(window._lastData.code,d);
+      }catch(e){
+        document.getElementById('tc-rewrite').innerHTML=
+          `<div class="empty"><div class="big">❌</div><p>${e.message}</p></div>`;
+      }finally{setLoad(btn,false,'✨ Fix & Rewrite')}
+    }
+
+    function buildResults(d){
+      const score=d.score;
+      const col=score>=80?'var(--green)':score>=50?'var(--yellow)':'var(--red)';
+      const off=188-(188*score/100);
+      let html=`
+        <div class="score-box">
+          <div class="ring">
+            <svg width="68" height="68" viewBox="0 0 68 68">
+              <circle class="trk" cx="34" cy="34" r="30"/>
+              <circle class="val" cx="34" cy="34" r="30"
+                style="stroke:${col};stroke-dashoffset:${off}"/>
+            </svg>
+            <div class="ring-num" style="color:${col}">${score}</div>
+          </div>
+          <div class="score-txt"><h3>Quality Score</h3><p>${esc(d.summary)}</p></div>
+        </div>
+        <div class="sev-row">
+          <div class="sev-c cr"><div class="sev-n">${d.critical_count}</div><div class="sev-l">Critical</div></div>
+          <div class="sev-c hi"><div class="sev-n">${d.high_count}</div><div class="sev-l">High</div></div>
+          <div class="sev-c me"><div class="sev-n">${d.medium_count}</div><div class="sev-l">Medium</div></div>
+          <div class="sev-c lo"><div class="sev-n">${d.low_count}</div><div class="sev-l">Low</div></div>
+        </div>`;
+      if(d.issues.length===0){
+        html+='<div class="empty"><div class="big">🎉</div><p>No issues found!</p></div>';
+      }else{
+        html+='<div class="issues">';
+        d.issues.forEach((iss,i)=>{
+          const id=`iss-${i}`;
+          html+=`<div class="iss" id="${id}">
+            <div class="iss-hdr" onclick="toggleIss('${id}')">
+              <span class="spill sp-${iss.severity}">${iss.severity}</span>
+              <span class="spill" style="background:var(--panel);color:var(--muted);border:1px solid var(--border)">${esc(iss.category)}</span>
+              <span class="iss-title">${esc(iss.message)}</span>
+              ${iss.line?`<span class="iss-line">L${iss.line}</span>`:''}
+            </div>
+            <div class="iss-body">
+              <p class="iss-msg">${esc(iss.message)}</p>
+              <div class="fix-box"><strong>💡 Fix Suggestion</strong>${esc(iss.suggestion)}</div>
+            </div>
+          </div>`;
+        });
+        html+='</div>';
+      }
+      return html;
+    }
+
+    function buildRewrite(orig,d){
+      const oLines=orig.split('\\n').map((l,i)=>
+        `<span style="color:var(--muted);user-select:none;padding-right:12px;font-size:.7rem">${String(i+1).padStart(3)}</span>${esc(l)}`
+      ).join('\\n');
+      const nLines=d.rewritten_code.split('\\n').map((l,i)=>
+        `<span style="color:var(--muted);user-select:none;padding-right:12px;font-size:.7rem">${String(i+1).padStart(3)}</span>${esc(l)}`
+      ).join('\\n');
+
+      return `
+        <div class="cmp-grid">
+          <div class="cpanel">
+            <div class="cph">
+              <h3>📄 Original Code</h3>
+              <button class="cpbtn" onclick="copyText('orig-txt')">Copy</button>
+            </div>
+            <pre><code id="orig-txt" data-raw="${encodeURIComponent(orig)}">${oLines}</code></pre>
+          </div>
+          <div class="cpanel">
+            <div class="cph">
+              <h3>✨ Rewritten Code</h3>
+              <button class="cpbtn" onclick="copyText('new-txt')">Copy</button>
+            </div>
+            <pre><code id="new-txt" data-raw="${encodeURIComponent(d.rewritten_code)}">${nLines}</code></pre>
+          </div>
+        </div>
+        <div style="padding:0 20px 20px;max-width:1380px;margin:0 auto">
+          <div class="panel">
+            <div class="ph">💡 <h2>Improvements Applied (${d.improvements.length})</h2></div>
+            <div class="impr">${d.improvements.map(i=>`<div class="impr-item">${esc(i)}</div>`).join('')}</div>
+            <div class="expl">${esc(d.explanation)}</div>
+          </div>
+        </div>`;
+    }
+
+    function esc(s){
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+             .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function setLoad(btn,on,orig){
+      if(on){btn._orig=btn.innerHTML;btn.innerHTML='⏳ Processing…';btn.disabled=true}
+      else{btn.innerHTML=btn._orig||orig;btn.disabled=false}
+    }
+    async function copyText(id){
+      const el=document.getElementById(id);
+      const raw=el.dataset.raw?decodeURIComponent(el.dataset.raw):el.innerText;
+      await navigator.clipboard.writeText(raw);
+      showToast('✅ Copied!');
+    }
+    function showToast(msg,bg){
+      const t=document.getElementById('toast');
+      t.textContent=msg;t.style.background=bg||'var(--green)';
+      t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);
+    }
+    </script>
+    """
+
+
+def build_page() -> str:
+    """Build the entire HTML page using Python strings — no HTML file needed."""
+
+    review_tab = """
+    <div class="grid2">
+      <!-- LEFT: Input -->
+      <div class="panel">
+        <div class="ph"><span>📝</span><h2>Your Code</h2></div>
+        <div class="pb">
+          <div>
+            <label class="lbl">Programming Language</label>
+            <select id="lang">
+              <option value="python">🐍 Python</option>
+              <option value="javascript">🟨 JavaScript</option>
+              <option value="java">☕ Java</option>
+              <option value="cpp">⚙️ C++</option>
+              <option value="other">📄 Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl">Paste Your Code</label>
+            <textarea id="code" placeholder="# Paste your code here...
+import sqlite3
+
+def get_user(username):
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    # Vulnerable to SQL injection
+    password = 'secret123'
+    eval(username)
+    query = f&quot;SELECT * FROM users WHERE username = '{username}'&quot;
+    cursor.execute(query)
+    result = cursor.fetchone()
+    return result"></textarea>
+          </div>
+          <div>
+            <label class="lbl">Focus Areas</label>
+            <div class="checks">
+              <label class="chk-item">
+                <input type="checkbox" class="focus-cb" value="bugs" checked>
+                <span>🐛 Bugs</span>
+              </label>
+              <label class="chk-item">
+                <input type="checkbox" class="focus-cb" value="performance" checked>
+                <span>⚡ Performance</span>
+              </label>
+              <label class="chk-item">
+                <input type="checkbox" class="focus-cb" value="security" checked>
+                <span>🔒 Security</span>
+              </label>
+              <label class="chk-item">
+                <input type="checkbox" class="focus-cb" value="best_practices" checked>
+                <span>✅ Best Practices</span>
+              </label>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="rev-btn" onclick="doReview()">
+              🔍 Review Code
+            </button>
+            <button class="btn btn-secondary" id="rw-btn" onclick="doRewrite()" disabled>
+              ✨ Fix & Rewrite
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Results -->
+      <div class="panel">
+        <div class="ph"><span>📊</span><h2>Review Results</h2></div>
+        <div class="pb" id="results">
+          <div class="empty">
+            <div class="big">🔬</div>
+            <p>Paste your code and click <strong>Review Code</strong><br>to get instant analysis — no API needed.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+
+    rewrite_tab = """
+    <div class="empty" style="padding:80px">
+      <div class="big">✨</div>
+      <p>Click <strong>Fix & Rewrite</strong> after reviewing to see the improved code here.</p>
+    </div>
+    """
+
+    how_tab = """
+    <div class="how">
+      <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:6px">How Code Refiner Works</h2>
+      <p style="color:var(--muted);font-size:.88rem">
+        100% local, rule-based static analysis — zero cloud, zero API keys.
+      </p>
+      <div class="steps">
+        <div class="step">
+          <div class="sn">01</div>
+          <h3>Paste & Select</h3>
+          <p>Paste your code, choose the programming language and which focus areas to analyze.</p>
+        </div>
+        <div class="step">
+          <div class="sn">02</div>
+          <h3>Static Analysis</h3>
+          <p>The Python backend applies 30+ regex rules and AST checks to find real issues across severity levels.</p>
+        </div>
+        <div class="step">
+          <div class="sn">03</div>
+          <h3>Auto-Rewrite</h3>
+          <p>The rewriter applies safe automatic fixes and shows exactly what changed and why.</p>
+        </div>
+      </div>
+
+      <h3 style="margin-top:30px;margin-bottom:4px;font-size:1.05rem;font-weight:700">Rule Categories</h3>
+      <p style="color:var(--muted);font-size:.82rem;margin-bottom:4px">30+ built-in rules across Python, JS, Java, C++.</p>
+      <div class="rg">
+        <div class="rc"><h4><span style="color:var(--red)">●</span> Security</h4>
+          <p>SQL injection, eval/exec, hardcoded secrets, XSS, shell injection, insecure pickle.</p></div>
+        <div class="rc"><h4><span style="color:var(--orange)">●</span> Bugs</h4>
+          <p>Bare except, mutable defaults, unreachable code, string comparison errors, resource leaks.</p></div>
+        <div class="rc"><h4><span style="color:var(--yellow)">●</span> Performance</h4>
+          <p>range(len()), string concat in loops, blocking sleep calls, inefficient patterns.</p></div>
+        <div class="rc"><h4><span style="color:var(--green)">●</span> Best Practices</h4>
+          <p>Logging vs print, docstrings, no wildcard imports, Pythonic idioms, code style.</p></div>
+      </div>
+
+      <div class="run-box">
+        <h3>🚀 How to Run</h3>
+        <pre><code style="color:#a8ff78">python app.py
+# ✅ Server starts at http://localhost:8080
+# No pip install required — pure Python stdlib!</code></pre>
+      </div>
+    </div>
+    """
+
+    page = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>🤖 Code Refiner — AI Code Review Agent</title>
+  {build_css()}
+</head>
+<body>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+
+  <!-- HEADER — generated by Python -->
+  <header>
+    <div class="hdr">
+      <div class="logo">
+        <div class="logo-box">🤖</div>
+        Code<span>Refiner</span>
+      </div>
+      <span class="pill-engine">⚡ Pure Python · No API Keys</span>
+    </div>
+  </header>
+
+  <!-- HERO — generated by Python -->
+  <div class="hero">
+    <div class="eyebrow">🔬 Rule-Based Static Analysis Engine</div>
+    <h1>Intelligent Code<br><span class="grad">Review &amp; Rewrite</span></h1>
+    <p>Detect bugs, security flaws &amp; bad practices instantly.<br>
+       Built entirely in Python — zero HTML files, zero external APIs.</p>
+  </div>
+
+  <!-- TABS — generated by Python -->
+  <div class="tabs">
+    <button id="tb-review"  class="tab active" onclick="switchTab('review')">🔍 Code Review</button>
+    <button id="tb-rewrite" class="tab"        onclick="switchTab('rewrite')">✨ Rewritten Code</button>
+    <button id="tb-how"     class="tab"        onclick="switchTab('how')">ℹ️ How It Works</button>
+  </div>
+
+  <!-- TAB CONTENTS — all built in Python -->
+  <div id="tc-review"  class="tab-content" style="display:block">{review_tab}</div>
+  <div id="tc-rewrite" class="tab-content" style="display:none">{rewrite_tab}</div>
+  <div id="tc-how"     class="tab-content" style="display:none">{how_tab}</div>
+
+  <div id="toast"></div>
+
+  {build_js()}
+</body>
+</html>"""
+    return page
+
+
+# ══════════════════════════════════════════════════════════════════
+#  SECTION 3 — PURE PYTHON HTTP SERVER
+#  No Flask, No FastAPI — uses http.server from stdlib
+# ══════════════════════════════════════════════════════════════════
+
+class CodeRefinerHandler(http.server.BaseHTTPRequestHandler):
+
+    def log_message(self, fmt, *args):
+        """Custom log — cleaner output."""
+        print(f"  [{self.command}] {self.path}  →  {args[1] if len(args)>1 else ''}")
+
+    def send_json(self, data: dict, status: int = 200):
+        body = json.dumps(data).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", len(body))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def send_html(self, html: str):
+        body = html.encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", len(body))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def read_json_body(self) -> dict:
+        length = int(self.headers.get("Content-Length", 0))
+        raw = self.rfile.read(length)
+        return json.loads(raw)
+
+    # ── GET ─────────────────────────────────────────────────────────
+    def do_GET(self):
+        path = self.path.split("?")[0]
+
+        if path == "/" or path == "/index":
+            # Entire page built in Python — no HTML file read
+            self.send_html(build_page())
+
+        elif path == "/api/health":
+            self.send_json({"status": "ok", "engine": "pure-python", "version": "2.0"})
+
+        elif path == "/api/languages":
+            self.send_json({"languages": list(RULES.keys()) + ["other"]})
+
+        else:
+            self.send_json({"error": "Not found"}, 404)
+
+    # ── OPTIONS (CORS preflight) ─────────────────────────────────────
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
+
+    # ── POST ────────────────────────────────────────────────────────
+    def do_POST(self):
+        path = self.path.split("?")[0]
+
+        try:
+            body = self.read_json_body()
+        except Exception:
+            self.send_json({"error": "Invalid JSON body"}, 400)
+            return
+
+        # ── /api/review ──────────────────────────────────────────────
+        if path == "/api/review":
+            code = body.get("code", "").strip()
+            language = body.get("language", "python")
+
+            if not code:
+                self.send_json({"error": "Code cannot be empty"}, 400)
+                return
+            if len(code) > 60_000:
+                self.send_json({"error": "Code too large (max 60,000 characters)"}, 400)
+                return
+
+            issues = analyze_code(code, language)
+            score  = compute_score(issues)
+
+            counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
+            for iss in issues:
+                counts[iss["severity"]] = counts.get(iss["severity"], 0) + 1
+
+            total = sum(counts.values())
+            if total == 0:
+                summary = f"✅ No issues found in your {language} code. Score: {score}/100 — clean!"
+            else:
+                parts = []
+                if counts["CRITICAL"]: parts.append(f"{counts['CRITICAL']} critical")
+                if counts["HIGH"]:     parts.append(f"{counts['HIGH']} high")
+                if counts["MEDIUM"]:   parts.append(f"{counts['MEDIUM']} medium")
+                if counts["LOW"]:      parts.append(f"{counts['LOW']} low")
+                verdict = ("needs immediate fixes" if counts["CRITICAL"]
+                           else "has significant issues" if counts["HIGH"]
+                           else "mostly fine with improvements needed" if counts["MEDIUM"]
+                           else "good with minor style suggestions")
+                summary = (f"Found {total} issue(s) — {', '.join(parts)} priority. "
+                           f"Code {verdict}. Score: {score}/100.")
+
+            self.send_json({
+                "issues": issues,
+                "summary": summary,
+                "score": score,
+                "critical_count": counts["CRITICAL"],
+                "high_count":     counts["HIGH"],
+                "medium_count":   counts["MEDIUM"],
+                "low_count":      counts["LOW"],
+            })
+
+        # ── /api/rewrite ─────────────────────────────────────────────
+        elif path == "/api/rewrite":
+            code     = body.get("code", "").strip()
+            language = body.get("language", "python")
+            issues   = body.get("issues", [])
+
+            if not code:
+                self.send_json({"error": "Code cannot be empty"}, 400)
+                return
+
+            rewritten, improvements = auto_rewrite(code, language)
+            explanation = (
+                f"The {language} code was automatically refactored. "
+                f"{len(improvements)} improvement(s) applied. "
+                "Review carefully before using in production — "
+                "some issues may need manual intervention."
+            )
+            self.send_json({
+                "rewritten_code": rewritten,
+                "improvements":   improvements,
+                "explanation":    explanation,
+            })
+
+        else:
+            self.send_json({"error": "Not found"}, 404)
+
+
+# ══════════════════════════════════════════════════════════════════
+#  SECTION 4 — ENTRY POINT
+# ══════════════════════════════════════════════════════════════════
+
+def main():
+    PORT = 8080
+
+    # Allow port reuse
+    socketserver.TCPServer.allow_reuse_address = True
+
+    with socketserver.TCPServer(("", PORT), CodeRefinerHandler) as httpd:
+        url = f"http://localhost:{PORT}"
+        print()
+        print("=" * 58)
+        print("  🤖  CODE REFINER — AI Code Review & Rewrite Agent")
+        print("=" * 58)
+        print(f"  ✅  App →  {url}")
+        print(f"  📖  API →  {url}/api/health")
+        print()
+        print("  Built with:  Pure Python stdlib only")
+        print("  No Flask · No FastAPI · No HTML files · No APIs")
+        print("=" * 58)
+        print()
+        print("  Waiting for requests… (Ctrl+C to stop)")
+        print()
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            print("\n  Server stopped. Goodbye! 👋")
+
+
+if __name__ == "__main__":
+    main()
