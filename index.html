@@ -1,347 +1,93 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeRefine Pro</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0d1117;
-    --surface: #161b22;
-    --surface2: #0f1318;
-    --border: #30363d;
-    --purple: #a855f7;
-    --purple-glow: rgba(168,85,247,0.3);
-    --cyan: #22d3ee;
-    --cyan-glow: rgba(34,211,238,0.25);
-    --text: #e6edf3;
-    --muted: #8b949e;
-    --green: #3fb950;
-    --yellow: #f0c55a;
-    --red: #f85149;
-  }
+import { useState } from "react";
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+const COLORS = {
+  bg: "#0d1117",
+  surface: "#161b22",
+  surface2: "#0f1318",
+  border: "#30363d",
+  purple: "#a855f7",
+  cyan: "#22d3ee",
+  text: "#e6edf3",
+  muted: "#8b949e",
+  green: "#3fb950",
+  yellow: "#f0c55a",
+  red: "#f85149",
+};
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'JetBrains Mono', monospace;
-    min-height: 100vh;
-    padding: 32px 24px;
-  }
+function Badge({ status }) {
+  const map = {
+    ok: { bg: "rgba(63,185,80,0.15)", color: "#3fb950", label: "✓ Clean" },
+    warnings: { bg: "rgba(240,197,90,0.15)", color: "#f0c55a", label: "⚠ Warnings" },
+    errors: { bg: "rgba(248,81,73,0.15)", color: "#f85149", label: "✗ Errors" },
+  };
+  const s = map[status] || map.errors;
+  return (
+    <span style={{
+      background: s.bg, color: s.color,
+      padding: "2px 10px", borderRadius: 20,
+      fontSize: 10, fontWeight: 700, letterSpacing: "0.05em"
+    }}>{s.label}</span>
+  );
+}
 
-  .header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 28px;
-  }
+function Toast({ msg, show }) {
+  return (
+    <div style={{
+      position: "fixed", bottom: 24, right: 24,
+      background: COLORS.surface, border: `1px solid ${COLORS.border}`,
+      color: COLORS.green, padding: "10px 18px", borderRadius: 10,
+      fontSize: 13, fontWeight: 600, fontFamily: "monospace",
+      transform: show ? "translateY(0)" : "translateY(60px)",
+      opacity: show ? 1 : 0, transition: "all 0.25s", zIndex: 999,
+    }}>{msg}</div>
+  );
+}
 
-  .logo-icon {
-    width: 40px; height: 40px;
-    background: linear-gradient(135deg, var(--purple), #6366f1);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-    box-shadow: 0 0 20px var(--purple-glow);
-  }
-
-  .logo-text {
-    font-family: 'Syne', sans-serif;
-    font-size: 26px;
-    font-weight: 800;
-    background: linear-gradient(90deg, var(--purple), var(--cyan));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .input-area {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 0;
-    margin-bottom: 20px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-
-  .input-area:focus-within {
-    border-color: var(--purple);
-    box-shadow: 0 0 0 3px var(--purple-glow);
-  }
-
-  .editor-header {
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border);
-    padding: 8px 16px;
-    font-size: 11px;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .dot { width: 10px; height: 10px; border-radius: 50%; }
-  .dot-red { background: #ff5f57; }
-  .dot-yellow { background: #ffbd2e; }
-  .dot-green { background: #28c840; }
-
-  textarea {
-    width: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 14px;
-    line-height: 1.7;
-    padding: 16px;
-    resize: vertical;
-    min-height: 200px;
-    caret-color: var(--purple);
-  }
-
-  .buttons {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 28px;
-  }
-
-  btn-base {
-    display: inline-flex; align-items: center; gap: 8px;
-  }
-
-  button {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 12px 24px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.02em;
-  }
-
-  .btn-primary {
-    background: linear-gradient(135deg, var(--purple), #6366f1);
-    color: white;
-    flex: 1;
-    min-width: 180px;
-    box-shadow: 0 4px 15px var(--purple-glow);
-  }
-
-  .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 25px var(--purple-glow);
-  }
-
-  .btn-primary:active { transform: translateY(0); }
-
-  .btn-secondary {
-    background: var(--surface);
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-
-  .btn-secondary:hover {
-    border-color: var(--muted);
-    background: var(--surface2);
-  }
-
-  .btn-cyan {
-    background: linear-gradient(135deg, #0891b2, var(--cyan));
-    color: #0f1318;
-    font-weight: 700;
-    box-shadow: 0 4px 15px var(--cyan-glow);
-  }
-
-  .btn-cyan:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 25px var(--cyan-glow);
-  }
-
-  .panels {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-
-  @media (max-width: 700px) {
-    .panels { grid-template-columns: 1fr; }
-  }
-
-  .panel {
-    background: var(--surface);
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-  }
-
-  .panel-header {
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border);
-    padding: 10px 16px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .panel-left .panel-header { color: var(--purple); border-top: 2px solid var(--purple); }
-  .panel-right .panel-header { color: var(--cyan); border-top: 2px solid var(--cyan); }
-
-  .panel-content {
-    padding: 16px;
-    font-size: 13px;
-    line-height: 1.7;
-    min-height: 150px;
-    white-space: pre-wrap;
-    color: var(--text);
-  }
-
-  .panel-content.empty { color: var(--muted); font-style: italic; }
-
-  .spinner {
-    display: inline-block;
-    width: 14px; height: 14px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    margin-right: 6px;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .copy-btn {
-    margin-left: auto;
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    padding: 3px 10px;
-    border-radius: 6px;
-    font-size: 10px;
-    cursor: pointer;
-    font-family: 'JetBrains Mono', monospace;
-    transition: all 0.15s;
-  }
-
-  .copy-btn:hover { color: var(--text); border-color: var(--muted); }
-
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-  }
-
-  .badge-ok { background: rgba(63,185,80,0.15); color: var(--green); }
-  .badge-warn { background: rgba(240,197,90,0.15); color: var(--yellow); }
-  .badge-err { background: rgba(248,81,73,0.15); color: var(--red); }
-
-  .tip-line {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 6px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    font-size: 12px;
-  }
-
-  .tip-line:last-child { border-bottom: none; }
-  .tip-icon { flex-shrink: 0; margin-top: 1px; }
-
-  .toasted {
-    position: fixed;
-    bottom: 24px; right: 24px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--green);
-    padding: 10px 18px;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 600;
-    transform: translateY(60px);
-    opacity: 0;
-    transition: all 0.25s;
-    z-index: 999;
-  }
-
-  .toasted.show { transform: translateY(0); opacity: 1; }
-</style>
-</head>
-<body>
-
-<div class="header">
-  <div class="logo-icon">🐍</div>
-  <span class="logo-text">CodeRefine Pro</span>
-</div>
-
-<div class="input-area">
-  <div class="editor-header">
-    <div class="dot dot-red"></div>
-    <div class="dot dot-yellow"></div>
-    <div class="dot dot-green"></div>
-    <span style="margin-left:8px">input.py</span>
-  </div>
-  <textarea id="codeInput" spellcheck="false" placeholder="// Paste your code here...">print('hi')</textarea>
-</div>
-
-<div class="buttons">
-  <button class="btn-primary" id="refineBtn" onclick="refineCode()">✨ Refine &amp; Enhance</button>
-  <button class="btn-secondary" onclick="clearAll()">🗑 Clear All</button>
-  <button class="btn-secondary" onclick="copyPageURL()">🔗 Copy Page URL</button>
-  <button class="btn-cyan" onclick="copyMagicLink()">⚡ Copy Magic Link</button>
-</div>
-
-<div class="panels">
-  <div class="panel panel-left">
-    <div class="panel-header">
-      ✨ ENHANCED CODE
-      <button class="copy-btn" onclick="copyCode()">copy</button>
-      <span id="codeBadge"></span>
+function Panel({ title, icon, accentColor, children, headerRight }) {
+  return (
+    <div style={{
+      background: COLORS.surface, borderRadius: 12,
+      border: `1px solid ${COLORS.border}`, overflow: "hidden", flex: 1,
+    }}>
+      <div style={{
+        background: COLORS.surface2, borderBottom: `1px solid ${COLORS.border}`,
+        borderTop: `2px solid ${accentColor}`,
+        padding: "10px 16px", fontSize: 11, fontWeight: 700,
+        letterSpacing: "0.08em", color: accentColor,
+        display: "flex", alignItems: "center", gap: 8,
+        fontFamily: "monospace",
+      }}>
+        {icon} {title}
+        {headerRight && <span style={{ marginLeft: "auto" }}>{headerRight}</span>}
+      </div>
+      <div style={{
+        padding: 16, fontSize: 13, lineHeight: 1.7,
+        minHeight: 160, fontFamily: "monospace", color: COLORS.text,
+        whiteSpace: "pre-wrap", wordBreak: "break-word",
+      }}>
+        {children}
+      </div>
     </div>
-    <div class="panel-content empty" id="enhancedCode">Cleaned code will appear here...</div>
-  </div>
+  );
+}
 
-  <div class="panel panel-right">
-    <div class="panel-header">
-      📊 QUALITY REPORT
-      <span id="reportBadge"></span>
-    </div>
-    <div class="panel-content empty" id="qualityReport">Ready for analysis.</div>
-  </div>
-</div>
+export default function CodeRefinePro() {
+  const [code, setCode] = useState("print('hi')");
+  const [enhanced, setEnhanced] = useState(null);
+  const [report, setReport] = useState(null);
+  const [status, setStatus] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState({ show: false, msg: "" });
 
-<div class="toasted" id="toast"></div>
+  function showToast(msg) {
+    setToast({ show: true, msg });
+    setTimeout(() => setToast({ show: false, msg: "" }), 2500);
+  }
 
-<script>
   async function refineCode() {
-    const code = document.getElementById('codeInput').value.trim();
-    if (!code) { showToast('⚠️ Please enter some code first'); return; }
-
-    const btn = document.getElementById('refineBtn');
-    btn.innerHTML = '<span class="spinner"></span> Analyzing...';
-    btn.disabled = true;
-
-    const enhancedEl = document.getElementById('enhancedCode');
-    const reportEl = document.getElementById('qualityReport');
-    const codeBadge = document.getElementById('codeBadge');
-    const reportBadge = document.getElementById('reportBadge');
-
-    enhancedEl.textContent = 'Processing...';
-    enhancedEl.classList.remove('empty');
-    reportEl.textContent = 'Analyzing code quality...';
-    reportEl.classList.remove('empty');
+    if (!code.trim()) { showToast("⚠️ Please enter some code first"); return; }
+    setLoading(true);
+    setEnhanced(null); setReport(null); setStatus(null);
 
     try {
       const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -352,101 +98,191 @@
           max_tokens: 1000,
           messages: [{
             role: "user",
-            content: `You are a code quality tool. Given this code snippet, respond with ONLY valid JSON (no markdown, no backticks) in this exact format:
+            content: `You are a code quality tool. Analyze and fix this code. Respond ONLY with valid JSON (no markdown, no backticks):
 {
-  "enhanced": "<corrected and enhanced code here>",
-  "status": "ok" | "warnings" | "errors",
-  "issues": ["issue1", "issue2"],
-  "tips": ["tip1", "tip2"],
+  "enhanced": "<corrected code>",
+  "status": "ok",
+  "issues": ["list any issues found, or empty array if none"],
+  "tips": ["improvement tips"],
   "summary": "one sentence summary"
 }
 
-Code to analyze:
+Code:
 ${code}`
           }]
         })
       });
 
       const data = await response.json();
-      const raw = data.content[0].text;
-      const clean = raw.replace(/```json|```/g, '').trim();
+      const raw = data.content?.[0]?.text || "";
+      const clean = raw.replace(/```json|```/g, "").trim();
       const result = JSON.parse(clean);
 
-      enhancedEl.textContent = result.enhanced || code;
-      enhancedEl.classList.remove('empty');
-
-      // Status badge
-      const badgeClass = result.status === 'ok' ? 'badge-ok' : result.status === 'warnings' ? 'badge-warn' : 'badge-err';
-      const badgeLabel = result.status === 'ok' ? '✓ Clean' : result.status === 'warnings' ? '⚠ Warnings' : '✗ Errors';
-      codeBadge.innerHTML = `<span class="badge ${badgeClass}">${badgeLabel}</span>`;
-      reportBadge.innerHTML = `<span class="badge ${badgeClass}">${result.status}</span>`;
-
-      // Build quality report
-      let reportHTML = `<strong style="color:var(--cyan)">${result.summary}</strong>\n\n`;
-      if (result.issues && result.issues.length > 0) {
-        reportHTML += `<strong style="color:var(--red)">Issues Found:</strong>\n`;
-        result.issues.forEach(i => { reportHTML += `  • ${i}\n`; });
-        reportHTML += '\n';
-      }
-      if (result.tips && result.tips.length > 0) {
-        reportHTML += `<strong style="color:var(--yellow)">Tips:</strong>\n`;
-        result.tips.forEach(t => { reportHTML += `  💡 ${t}\n`; });
-      }
-
-      reportEl.innerHTML = reportHTML.replace(/\n/g, '<br>');
-      reportEl.classList.remove('empty');
-
+      setEnhanced(result.enhanced || code);
+      setStatus(result.status || "ok");
+      setReport(result);
     } catch (err) {
-      enhancedEl.textContent = '// Error: Could not process code.\n// ' + err.message;
-      reportEl.textContent = 'Analysis failed. Check network or try again.';
-      codeBadge.innerHTML = '<span class="badge badge-err">✗ Error</span>';
+      setEnhanced("// Error processing code\n// " + err.message);
+      setStatus("errors");
+      setReport({ summary: "Analysis failed. Please try again.", issues: [], tips: [] });
     }
 
-    btn.innerHTML = '✨ Refine &amp; Enhance';
-    btn.disabled = false;
+    setLoading(false);
   }
 
   function clearAll() {
-    document.getElementById('codeInput').value = '';
-    document.getElementById('enhancedCode').textContent = 'Cleaned code will appear here...';
-    document.getElementById('enhancedCode').classList.add('empty');
-    document.getElementById('qualityReport').textContent = 'Ready for analysis.';
-    document.getElementById('qualityReport').classList.add('empty');
-    document.getElementById('codeBadge').innerHTML = '';
-    document.getElementById('reportBadge').innerHTML = '';
+    setCode(""); setEnhanced(null); setReport(null); setStatus(null);
   }
 
   function copyCode() {
-    const text = document.getElementById('enhancedCode').textContent;
-    navigator.clipboard.writeText(text).then(() => showToast('✓ Code copied!'));
+    if (enhanced) {
+      navigator.clipboard.writeText(enhanced).then(() => showToast("✓ Code copied!"));
+    }
   }
 
   function copyPageURL() {
-    const code = encodeURIComponent(document.getElementById('codeInput').value);
-    const url = window.location.href.split('?')[0] + '?code=' + code;
-    navigator.clipboard.writeText(url).then(() => showToast('✓ Page URL copied!'));
+    navigator.clipboard.writeText(window.location.href).then(() => showToast("✓ URL copied!"));
   }
 
   function copyMagicLink() {
-    const code = document.getElementById('enhancedCode').textContent;
-    if (!code || code === 'Cleaned code will appear here...') {
-      showToast('⚠️ Enhance code first!'); return;
-    }
-    navigator.clipboard.writeText(code).then(() => showToast('⚡ Magic link copied!'));
+    if (!enhanced) { showToast("⚠️ Enhance code first!"); return; }
+    navigator.clipboard.writeText(enhanced).then(() => showToast("⚡ Magic link copied!"));
   }
 
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2500);
-  }
+  const btnBase = {
+    fontFamily: "monospace", fontWeight: 700, fontSize: 13,
+    padding: "13px 22px", borderRadius: 10, border: "none",
+    cursor: "pointer", transition: "all 0.2s", letterSpacing: "0.02em",
+  };
 
-  // Load from URL params
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('code')) {
-    document.getElementById('codeInput').value = decodeURIComponent(params.get('code'));
-  }
-</script>
-</body>
-</html>
+  return (
+    <div style={{ background: COLORS.bg, minHeight: "100vh", padding: "32px 24px", fontFamily: "monospace" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28 }}>
+        <div style={{
+          width: 40, height: 40, background: "linear-gradient(135deg, #a855f7, #6366f1)",
+          borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 20, boxShadow: "0 0 20px rgba(168,85,247,0.3)",
+        }}>🐍</div>
+        <span style={{
+          fontSize: 26, fontWeight: 800,
+          background: "linear-gradient(90deg, #a855f7, #22d3ee)",
+          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+        }}>CodeRefine Pro</span>
+      </div>
+
+      {/* Input */}
+      <div style={{
+        background: COLORS.surface, border: `1px solid ${COLORS.border}`,
+        borderRadius: 12, marginBottom: 20, overflow: "hidden",
+      }}>
+        <div style={{
+          background: COLORS.surface2, borderBottom: `1px solid ${COLORS.border}`,
+          padding: "8px 16px", fontSize: 11, color: COLORS.muted,
+          display: "flex", alignItems: "center", gap: 8,
+        }}>
+          <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#ff5f57", display: "inline-block" }} />
+          <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#ffbd2e", display: "inline-block" }} />
+          <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#28c840", display: "inline-block" }} />
+          <span style={{ marginLeft: 8 }}>input.py</span>
+        </div>
+        <textarea
+          value={code}
+          onChange={e => setCode(e.target.value)}
+          spellCheck={false}
+          placeholder="// Paste your code here..."
+          style={{
+            width: "100%", background: "transparent", border: "none", outline: "none",
+            color: COLORS.text, fontFamily: "monospace", fontSize: 14, lineHeight: 1.7,
+            padding: 16, resize: "vertical", minHeight: 200, caretColor: COLORS.purple,
+          }}
+        />
+      </div>
+
+      {/* Buttons */}
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 28 }}>
+        <button
+          onClick={refineCode}
+          disabled={loading}
+          style={{
+            ...btnBase, flex: 1, minWidth: 180,
+            background: loading ? "#6b46a0" : "linear-gradient(135deg, #a855f7, #6366f1)",
+            color: "white", boxShadow: "0 4px 15px rgba(168,85,247,0.3)",
+            opacity: loading ? 0.8 : 1,
+          }}
+        >
+          {loading ? "⏳ Analyzing..." : "✨ Refine & Enhance"}
+        </button>
+        <button onClick={clearAll} style={{ ...btnBase, background: COLORS.surface, color: COLORS.text, border: `1px solid ${COLORS.border}` }}>
+          🗑 Clear All
+        </button>
+        <button onClick={copyPageURL} style={{ ...btnBase, background: COLORS.surface, color: COLORS.text, border: `1px solid ${COLORS.border}` }}>
+          🔗 Copy Page URL
+        </button>
+        <button onClick={copyMagicLink} style={{
+          ...btnBase, background: "linear-gradient(135deg, #0891b2, #22d3ee)",
+          color: "#0f1318", boxShadow: "0 4px 15px rgba(34,211,238,0.25)",
+        }}>
+          ⚡ Copy Magic Link
+        </button>
+      </div>
+
+      {/* Panels */}
+      <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+        <Panel
+          title="ENHANCED CODE"
+          icon="✨"
+          accentColor={COLORS.purple}
+          headerRight={
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {status && <Badge status={status} />}
+              {enhanced && (
+                <button onClick={copyCode} style={{
+                  background: "none", border: `1px solid ${COLORS.border}`,
+                  color: COLORS.muted, padding: "3px 10px", borderRadius: 6,
+                  fontSize: 10, cursor: "pointer", fontFamily: "monospace",
+                }}>copy</button>
+              )}
+            </div>
+          }
+        >
+          {enhanced
+            ? <span style={{ color: COLORS.green }}>{enhanced}</span>
+            : <span style={{ color: COLORS.muted, fontStyle: "italic" }}>
+                {loading ? "⏳ Processing your code..." : "Cleaned code will appear here..."}
+              </span>
+          }
+        </Panel>
+
+        <Panel title="QUALITY REPORT" icon="📊" accentColor={COLORS.cyan} headerRight={status && <Badge status={status} />}>
+          {report
+            ? <div>
+                <div style={{ color: COLORS.cyan, fontWeight: 700, marginBottom: 12 }}>{report.summary}</div>
+                {report.issues?.length > 0 && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ color: COLORS.red, fontWeight: 700, marginBottom: 6 }}>Issues Found:</div>
+                    {report.issues.map((i, idx) => (
+                      <div key={idx} style={{ color: COLORS.text, paddingLeft: 12, marginBottom: 4 }}>• {i}</div>
+                    ))}
+                  </div>
+                )}
+                {report.tips?.length > 0 && (
+                  <div>
+                    <div style={{ color: COLORS.yellow, fontWeight: 700, marginBottom: 6 }}>Tips:</div>
+                    {report.tips.map((t, idx) => (
+                      <div key={idx} style={{ color: COLORS.text, paddingLeft: 12, marginBottom: 4 }}>💡 {t}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            : <span style={{ color: COLORS.muted, fontStyle: "italic" }}>
+                {loading ? "⏳ Analyzing code quality..." : "Ready for analysis."}
+              </span>
+          }
+        </Panel>
+      </div>
+
+      <Toast msg={toast.msg} show={toast.show} />
+    </div>
+  );
+}
