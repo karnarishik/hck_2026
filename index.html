@@ -18,7 +18,7 @@
     background: linear-gradient(135deg, #a855f7, #6366f1);
     border-radius: 10px; display: flex; align-items: center;
     justify-content: center; font-size: 22px;
-    box-shadow: 0 0 22px rgba(168,85,247,0.4);
+    box-shadow: 0 0 22px rgba(168,85,247,0.35);
   }
   .logo-text {
     font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800;
@@ -31,7 +31,7 @@
     transition: border-color .2s, box-shadow .2s;
   }
   .editor-wrap:focus-within {
-    border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168,85,247,.18);
+    border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168,85,247,.2);
   }
   .editor-chrome {
     background: #0f1318; border-bottom: 1px solid #30363d;
@@ -44,7 +44,7 @@
     width: 100%; background: transparent; border: none; outline: none;
     color: #e6edf3; font-family: 'JetBrains Mono', monospace;
     font-size: 14px; line-height: 1.75; padding: 16px;
-    resize: vertical; min-height: 220px; caret-color: #a855f7;
+    resize: vertical; min-height: 200px; caret-color: #a855f7;
   }
   .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
   button {
@@ -57,14 +57,14 @@
     background: linear-gradient(135deg, #a855f7, #6366f1); color: #fff;
     box-shadow: 0 4px 16px rgba(168,85,247,.35);
   }
-  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(168,85,247,.5); }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(168,85,247,.45); }
   .btn-sec { background: #161b22; color: #e6edf3; border: 1px solid #30363d; }
   .btn-sec:hover { border-color: #8b949e; background: #0f1318; }
   .btn-cyan {
     background: linear-gradient(135deg, #0891b2, #22d3ee); color: #0f1318; font-weight: 800;
     box-shadow: 0 4px 16px rgba(34,211,238,.25);
   }
-  .btn-cyan:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(34,211,238,.4); }
+  .btn-cyan:hover { transform: translateY(-1px); }
   .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   @media(max-width:680px){ .panels{ grid-template-columns:1fr; } }
   .panel { background: #161b22; border: 1px solid #30363d; border-radius: 12px; overflow: hidden; }
@@ -73,36 +73,40 @@
     padding: 10px 16px; font-size: 11px; font-weight: 700;
     letter-spacing: .08em; display: flex; align-items: center; gap: 8px;
   }
-  .panel-left  .panel-head { color: #a855f7; border-top: 2px solid #a855f7; }
+  .panel-left .panel-head  { color: #a855f7; border-top: 2px solid #a855f7; }
   .panel-right .panel-head { color: #22d3ee; border-top: 2px solid #22d3ee; }
   .panel-body {
     padding: 16px; font-size: 13px; line-height: 1.75;
-    min-height: 180px; white-space: pre-wrap; word-break: break-word;
+    min-height: 160px; white-space: pre-wrap; word-break: break-word;
   }
-  .empty { color: #8b949e; font-style: italic; }
+  .muted { color: #8b949e; font-style: italic; }
   .copy-mini {
     margin-left: auto; background: none; border: 1px solid #30363d;
     color: #8b949e; padding: 3px 10px; border-radius: 6px;
     font-size: 10px; cursor: pointer; font-family: monospace; font-weight: 400;
   }
   .copy-mini:hover { color: #e6edf3; border-color: #8b949e; }
-  .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 10px; font-weight: 700; }
-  .b-ok   { background: rgba(63,185,80,.15);  color: #3fb950; }
-  .b-warn { background: rgba(240,197,90,.15); color: #f0c55a; }
-  .b-err  { background: rgba(248,81,73,.15);  color: #f85149; }
-  .rpt-ok   { color: #3fb950; }
-  .rpt-warn { color: #f0c55a; }
-  .rpt-err  { color: #f85149; }
-  .rpt-tip  { color: #22d3ee; }
-  .rpt-section { font-weight: 700; margin: 10px 0 5px; }
-  .rpt-item    { padding-left: 14px; margin-bottom: 3px; color: #e6edf3; }
+  .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:10px; font-weight:700; letter-spacing:.05em; }
+  .b-ok   { background:rgba(63,185,80,.15);  color:#3fb950; }
+  .b-warn { background:rgba(240,197,90,.15); color:#f0c55a; }
+  .b-err  { background:rgba(248,81,73,.15);  color:#f85149; }
+  .rpt-sum { color:#22d3ee; font-weight:700; margin-bottom:12px; }
+  .rpt-ttl { font-weight:700; margin-bottom:6px; margin-top:4px; }
+  .rpt-item { padding-left:12px; margin-bottom:4px; }
   #toast {
-    position: fixed; bottom: 24px; right: 24px;
-    background: #161b22; border: 1px solid #30363d; color: #3fb950;
-    padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600;
-    transform: translateY(60px); opacity: 0; transition: all .25s; z-index: 999; pointer-events: none;
+    position:fixed; bottom:24px; right:24px;
+    background:#161b22; border:1px solid #30363d; color:#3fb950;
+    padding:10px 18px; border-radius:10px; font-size:13px; font-weight:600;
+    transform:translateY(60px); opacity:0; transition:all .25s; z-index:999; pointer-events:none;
   }
-  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.show { transform:translateY(0); opacity:1; }
+  .line-num { color:#555; user-select:none; margin-right:14px; display:inline-block; min-width:20px; text-align:right; }
+  .kw  { color:#ff7b72; }
+  .str { color:#a5d6ff; }
+  .fn  { color:#d2a8ff; }
+  .cm  { color:#8b949e; font-style:italic; }
+  .num { color:#79c0ff; }
+  .op  { color:#f0c55a; }
 </style>
 </head>
 <body>
@@ -115,16 +119,16 @@
 <div class="editor-wrap">
   <div class="editor-chrome">
     <div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>
-    <span class="chrome-label">input.py / js / any language</span>
+    <span class="chrome-label" id="langLabel">input.py</span>
   </div>
   <textarea id="codeInput" spellcheck="false" placeholder="Paste your code here...">print('hi</textarea>
 </div>
 
 <div class="btn-row">
   <button class="btn-primary" onclick="refineCode()">✨ Refine &amp; Enhance</button>
-  <button class="btn-sec"     onclick="clearAll()">🗑 Clear All</button>
-  <button class="btn-sec"     onclick="copyPageURL()">🔗 Copy Page URL</button>
-  <button class="btn-cyan"    onclick="copyMagicLink()">⚡ Copy Magic Link</button>
+  <button class="btn-sec" onclick="clearAll()">🗑 Clear All</button>
+  <button class="btn-sec" onclick="copyPageURL()">🔗 Copy Page URL</button>
+  <button class="btn-cyan" onclick="copyMagicLink()">⚡ Copy Magic Link</button>
 </div>
 
 <div class="panels">
@@ -134,247 +138,289 @@
       <span id="codeBadge"></span>
       <button class="copy-mini" onclick="copyEnhanced()">copy</button>
     </div>
-    <div class="panel-body" id="enhancedOut"><span class="empty">Cleaned code will appear here...</span></div>
+    <div class="panel-body" id="enhancedOut"><span class="muted">Cleaned code will appear here...</span></div>
   </div>
   <div class="panel panel-right">
     <div class="panel-head">
       📊 QUALITY REPORT
       <span id="reportBadge"></span>
     </div>
-    <div class="panel-body" id="reportOut"><span class="empty">Ready for analysis.</span></div>
+    <div class="panel-body" id="reportOut"><span class="muted">Ready for analysis.</span></div>
   </div>
 </div>
 
 <div id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════
-//  CodeRefine Engine — 100% offline, no API key
-// ══════════════════════════════════════════════
-
-function detectLanguage(code) {
-  if (/^\s*(def |import |print\(|elif |self\.|from \w+ import)/m.test(code)) return 'python';
-  if (/^\s*(function |const |let |var |=>|console\.|document\.)/m.test(code)) return 'javascript';
-  if (/^\s*(<\?php|\$[a-zA-Z]|echo )/m.test(code)) return 'php';
-  if (/#include|int main|std::|cout/.test(code)) return 'cpp';
-  if (/public class|System\.out|import java/.test(code)) return 'java';
+/* ================================================================
+   LANGUAGE DETECTION
+================================================================ */
+function detectLang(code) {
+  if (/^\s*(def |import |from |print\s*\(|elif |#|:\s*$)/m.test(code)) return 'python';
+  if (/^\s*(function |const |let |var |=>|console\.log)/m.test(code))   return 'javascript';
+  if (/^\s*(#include|int main|std::)/m.test(code))                       return 'cpp';
+  if (/^\s*(public class|System\.out|void main)/m.test(code))            return 'java';
+  if (/(<html|<div|<p |<!DOCTYPE)/i.test(code))                          return 'html';
   return 'generic';
 }
 
-function refineCode() {
-  const raw = document.getElementById('codeInput').value;
-  if (!raw.trim()) { showToast('⚠️ Please enter some code first'); return; }
+/* ================================================================
+   FIXERS
+================================================================ */
+function fixPython(code) {
+  const lines = code.split('\n');
+  const fixed = [], changes = [];
 
-  const lang = detectLanguage(raw);
-  const result = analyze(raw, lang);
+  lines.forEach((line, i) => {
+    let l = line;
 
-  // ── Enhanced panel ──
-  document.getElementById('enhancedOut').textContent = result.fixed;
-  document.getElementById('codeBadge').innerHTML = badgeHTML(result.status);
+    // Unquoted multi-word string in print():  print(hello world)  →  print('hello world')
+    const mUnquoted = l.match(/^(\s*print\s*\(\s*)([^'"()\d\s][^'"()]*\s+[^'"()]+?)(\s*\))$/);
+    if (mUnquoted) {
+      l = mUnquoted[1] + "'" + mUnquoted[2].trim() + "'" + mUnquoted[3];
+      changes.push(`Line ${i+1}: Wrapped unquoted string in quotes`);
+    }
 
-  // ── Report panel ──
-  let html = '';
-  const sc = { ok:'rpt-ok', warnings:'rpt-warn', errors:'rpt-err' }[result.status];
-  html += `<div class="${sc} rpt-section">📝 ${esc(result.summary)}</div>`;
+    // Unclosed string + paren:  print('hi  →  print('hi')
+    const m1 = l.match(/^(\s*\w[\w.]*\s*\(\s*)(["'])([^"'\n]*)$/);
+    if (m1) {
+      l = l + m1[2] + ')';
+      changes.push(`Line ${i+1}: Closed unclosed string and parenthesis`);
+    }
 
-  if (result.errors.length) {
-    html += `<div class="rpt-section rpt-err">✗ Errors Fixed (${result.errors.length}):</div>`;
-    result.errors.forEach(e => { html += `<div class="rpt-item">• ${esc(e)}</div>`; });
-  }
-  if (result.warnings.length) {
-    html += `<div class="rpt-section rpt-warn">⚠ Warnings (${result.warnings.length}):</div>`;
-    result.warnings.forEach(w => { html += `<div class="rpt-item">• ${esc(w)}</div>`; });
-  }
-  if (result.tips.length) {
-    html += `<div class="rpt-section rpt-tip">💡 Tips:</div>`;
-    result.tips.forEach(t => { html += `<div class="rpt-item">${esc(t)}</div>`; });
-  }
-  if (!result.errors.length && !result.warnings.length)
-    html += `<div class="rpt-item rpt-ok">✓ No issues found — code looks great!</div>`;
+    // Python 2 print:  print "x"  →  print("x")
+    const m2 = l.match(/^(\s*)print\s+(["'][^"']*["']|\w+)\s*$/);
+    if (m2) {
+      l = m2[1] + 'print(' + m2[2].trim() + ')';
+      changes.push(`Line ${i+1}: Converted Python 2 print to Python 3`);
+    }
 
-  document.getElementById('reportOut').innerHTML = html;
-  document.getElementById('reportBadge').innerHTML = badgeHTML(result.status);
+    // Missing colon on block statements
+    if (/^\s*(if |elif |else\s*$|for |while |def |class |try\s*$|except|finally\s*$|with )/.test(l)
+        && !l.trim().endsWith(':') && !l.trim().endsWith('\\')) {
+      l = l + ':';
+      changes.push(`Line ${i+1}: Added missing colon`);
+    }
+
+    // == None / != None
+    if (/==\s*None/.test(l)) { l = l.replace(/==\s*None/g,'is None');     changes.push(`Line ${i+1}: == None → is None`); }
+    if (/!=\s*None/.test(l)) { l = l.replace(/!=\s*None/g,'is not None'); changes.push(`Line ${i+1}: != None → is not None`); }
+
+    // Trailing semicolon
+    if (/;\s*$/.test(l)) { l = l.replace(/;\s*$/,''); changes.push(`Line ${i+1}: Removed unnecessary semicolon`); }
+
+    fixed.push(l);
+  });
+
+  return { fixed: fixed.join('\n'), changes };
 }
 
-// ── Analysis engine ────────────────────────────────────────────
-function analyze(code, lang) {
-  let fixed = code;
-  const errors = [], warnings = [], tips = [];
+function fixJavaScript(code) {
+  const lines = code.split('\n');
+  const fixed = [], changes = [];
 
-  fixed = fixUnclosedStrings(fixed, errors);
-  fixed = fixUnclosedBrackets(fixed, errors);
+  lines.forEach((line, i) => {
+    let l = line;
+
+    // var → let
+    if (/^\s*var /.test(l)) { l = l.replace(/^(\s*)var /,'$1let '); changes.push(`Line ${i+1}: var → let`); }
+
+    // == → ===  (skip already ===)
+    if (/(?<![=!<>])={2}(?!=)/.test(l)) { l = l.replace(/(?<![=!<>])={2}(?!=)/g,'==='); changes.push(`Line ${i+1}: == → ===`); }
+
+    // != → !==
+    if (/!=(?!=)/.test(l)) { l = l.replace(/!=(?!=)/g,'!=='); changes.push(`Line ${i+1}: != → !==`); }
+
+    // Unclosed console.log string
+    const m = l.match(/^(\s*console\.log\s*\(\s*)(["'])([^"'\n]*)$/);
+    if (m) { l = l + m[2] + ')'; changes.push(`Line ${i+1}: Closed unclosed string`); }
+
+    fixed.push(l);
+  });
+
+  return { fixed: fixed.join('\n'), changes };
+}
+
+function fixGeneric(code) {
+  const lines = code.split('\n');
+  const fixed = [], changes = [];
+
+  lines.forEach((line, i) => {
+    let l = line;
+
+    const op = (l.match(/\(/g)||[]).length, cp = (l.match(/\)/g)||[]).length;
+    if (op > cp) { l += ')'.repeat(op-cp); changes.push(`Line ${i+1}: Closed ${op-cp} parenthesis`); }
+
+    const sq = (l.match(/'/g)||[]).length;
+    if (sq%2!==0) { l += "'"; changes.push(`Line ${i+1}: Closed unclosed single quote`); }
+
+    const dq = (l.match(/"/g)||[]).length;
+    if (dq%2!==0) { l += '"'; changes.push(`Line ${i+1}: Closed unclosed double quote`); }
+
+    fixed.push(l);
+  });
+
+  return { fixed: fixed.join('\n'), changes };
+}
+
+/* ================================================================
+   ANALYZERS
+================================================================ */
+function analyzePython(code) {
+  const issues=[], tips=[];
+  code.split('\n').forEach((line,i) => {
+    const o=(line.match(/\(/g)||[]).length, c=(line.match(/\)/g)||[]).length;
+    if(o!==c) issues.push(`Line ${i+1}: Mismatched parentheses`);
+    if((line.match(/'/g)||[]).length%2!==0) issues.push(`Line ${i+1}: Unclosed single quote`);
+    if((line.match(/"/g)||[]).length%2!==0) issues.push(`Line ${i+1}: Unclosed double quote`);
+    // Detect print() with unquoted multi-word string: print(hello world)
+    const unquotedPrint = line.match(/^\s*print\s*\(\s*([^'"()\d\s][^'"()]*\s+[^'"()]+)\s*\)/);
+    if(unquotedPrint) issues.push(`Line ${i+1}: String argument must be quoted — use print('${unquotedPrint[1].trim()}')`);
+    // Detect print() with unquoted single word that looks like a non-variable string
+    // (only flag if it contains spaces — already covered above — handled)
+    if(/^\t/.test(line)) tips.push(`Line ${i+1}: Use 4 spaces instead of tabs (PEP 8)`);
+    if(line.length>79) tips.push(`Line ${i+1}: Line too long (${line.length} chars)`);
+    if(/^\s*except\s*:/.test(line)) tips.push(`Line ${i+1}: Avoid bare except clause`);
+    if(/==\s*None/.test(line)) tips.push(`Line ${i+1}: Use 'is None' not '== None'`);
+  });
+  if(!code.endsWith('\n')) tips.push('Add a newline at end of file (PEP 8)');
+  return { issues, tips, status: issues.length?'errors':tips.length?'warnings':'ok' };
+}
+
+function analyzeJS(code) {
+  const issues=[], tips=[];
+  code.split('\n').forEach((line,i) => {
+    if(/^\s*var /.test(line)) tips.push(`Line ${i+1}: Use let/const instead of var`);
+    if(/(?<![=!<>])={2}(?!=)/.test(line)) issues.push(`Line ${i+1}: Use === instead of ==`);
+    if(/!=(?!=)/.test(line)) issues.push(`Line ${i+1}: Use !== instead of !=`);
+    if(/console\.log/.test(line)) tips.push(`Line ${i+1}: Remove console.log before production`);
+    const o=(line.match(/\(/g)||[]).length, c=(line.match(/\)/g)||[]).length;
+    if(o!==c) issues.push(`Line ${i+1}: Mismatched parentheses`);
+  });
+  return { issues, tips, status: issues.length?'errors':tips.length?'warnings':'ok' };
+}
+
+function analyzeGeneric(code) {
+  const issues=[], tips=[];
+  code.split('\n').forEach((line,i) => {
+    if((line.match(/\(/g)||[]).length!==(line.match(/\)/g)||[]).length) issues.push(`Line ${i+1}: Mismatched parentheses`);
+    if((line.match(/\[/g)||[]).length!==(line.match(/\]/g)||[]).length) issues.push(`Line ${i+1}: Mismatched brackets`);
+    if((line.match(/'/g)||[]).length%2!==0) issues.push(`Line ${i+1}: Unclosed single quote`);
+    if((line.match(/"/g)||[]).length%2!==0) issues.push(`Line ${i+1}: Unclosed double quote`);
+  });
+  return { issues, tips, status: issues.length?'errors':tips.length?'warnings':'ok' };
+}
+
+/* ================================================================
+   SYNTAX HIGHLIGHTER
+================================================================ */
+function highlight(code, lang) {
+  let h = escHtml(code);
 
   if (lang === 'python') {
-    fixed = fixPythonColons(fixed, errors);
-    fixed = fixPythonIndent(fixed, warnings);
-    tips.push('Use 4 spaces per indent level (PEP 8).');
-    tips.push('Add docstrings to functions: """Description"""');
-    if (!/^#!/.test(fixed)) tips.push('Consider adding a shebang: #!/usr/bin/env python3');
+    h = h.replace(/(#[^\n]*)/g, '<span class="cm">$1</span>');
+    h = h.replace(/\b(False|None|True|and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield)\b/g,'<span class="kw">$1</span>');
+    h = h.replace(/(&#39;(?:[^&]|&(?!#39;))*&#39;|&quot;(?:[^&]|&(?!quot;))*&quot;)/g,'<span class="str">$1</span>');
+    h = h.replace(/\b(\d+\.?\d*)\b/g,'<span class="num">$1</span>');
+    h = h.replace(/\b([A-Za-z_]\w*)(?=\s*\()/g,'<span class="fn">$1</span>');
+  } else if (lang === 'javascript') {
+    h = h.replace(/(\/\/[^\n]*)/g,'<span class="cm">$1</span>');
+    h = h.replace(/\b(async|await|break|case|catch|class|const|continue|debugger|default|delete|do|else|export|extends|finally|for|function|if|import|in|instanceof|let|new|of|return|static|super|switch|this|throw|try|typeof|var|void|while|with|yield|true|false|null|undefined)\b/g,'<span class="kw">$1</span>');
+    h = h.replace(/(&#39;[^&#]*&#39;|&quot;[^&]*&quot;)/g,'<span class="str">$1</span>');
+    h = h.replace(/\b(\d+\.?\d*)\b/g,'<span class="num">$1</span>');
+    h = h.replace(/\b([A-Za-z_]\w*)(?=\s*\()/g,'<span class="fn">$1</span>');
   }
 
-  if (lang === 'javascript') {
-    fixed = fixJSSemicolons(fixed, warnings);
-    if (/console\.log/.test(fixed)) tips.push('Remove console.log() calls before production.');
-    if (/var /.test(fixed)) tips.push('Replace var with const or let.');
-    tips.push('Use === instead of == for strict equality.');
+  // Add line numbers
+  const lines = h.split('\n');
+  return lines.map((l,i)=>`<span class="line-num">${i+1}</span>${l}`).join('\n');
+}
+
+/* ================================================================
+   MAIN
+================================================================ */
+let lastEnhanced = '';
+
+function refineCode() {
+  const code = document.getElementById('codeInput').value;
+  if (!code.trim()) { toast('⚠️ Please enter some code first'); return; }
+
+  const lang = detectLang(code);
+  const langNames = { python:'Python', javascript:'JavaScript', cpp:'C++', java:'Java', html:'HTML', generic:'Generic' };
+  document.getElementById('langLabel').textContent = 'input.' + (lang==='javascript'?'js':lang==='cpp'?'cpp':lang==='java'?'java':lang==='html'?'html':'py');
+
+  // Fix
+  const fix = lang==='python' ? fixPython(code) : lang==='javascript' ? fixJavaScript(code) : fixGeneric(code);
+
+  // Analyze fixed code
+  const ana = lang==='python' ? analyzePython(fix.fixed) : lang==='javascript' ? analyzeJS(fix.fixed) : analyzeGeneric(fix.fixed);
+
+  lastEnhanced = fix.fixed;
+
+  // Render code
+  document.getElementById('enhancedOut').innerHTML = highlight(fix.fixed, lang);
+  document.getElementById('codeBadge').innerHTML   = badge(ana.status);
+  document.getElementById('reportBadge').innerHTML = badge(ana.status);
+
+  // Render report
+  let rpt = `<div class="rpt-sum">📁 Detected: <strong>${langNames[lang]}</strong></div>`;
+
+  if (fix.changes.length) {
+    rpt += `<div class="rpt-ttl" style="color:#3fb950">✅ Auto-Fixed (${fix.changes.length}):</div>`;
+    fix.changes.forEach(c => rpt += `<div class="rpt-item" style="color:#3fb950">• ${escHtml(c)}</div>`);
+  }
+  if (ana.issues.length) {
+    rpt += `<div class="rpt-ttl" style="color:#f85149">❌ Issues (${ana.issues.length}):</div>`;
+    ana.issues.forEach(x => rpt += `<div class="rpt-item" style="color:#f85149">• ${escHtml(x)}</div>`);
+  }
+  if (ana.tips.length) {
+    rpt += `<div class="rpt-ttl" style="color:#f0c55a">💡 Tips (${ana.tips.length}):</div>`;
+    ana.tips.forEach(t => rpt += `<div class="rpt-item" style="color:#f0c55a">• ${escHtml(t)}</div>`);
+  }
+  if (!fix.changes.length && !ana.issues.length && !ana.tips.length) {
+    rpt += `<div style="color:#3fb950;font-weight:700;margin-top:8px">🎉 Your code looks great — no issues found!</div>`;
   }
 
-  if (lang === 'cpp' || lang === 'java') {
-    if (!/\/\/.*copyright|\/\*.*\*\//i.test(fixed)) tips.push('Add a file header comment with author and date.');
-  }
-
-  fixed = fixed.split('\n').map(l => l.trimEnd()).join('\n'); // trailing whitespace
-  fixed = fixed.replace(/\n{3,}/g, '\n\n');                  // too many blank lines
-  fixed = ensureNewlineAtEnd(fixed);
-
-  // Long lines
-  const longLines = fixed.split('\n').filter(l => l.length > 100);
-  if (longLines.length) warnings.push(`${longLines.length} line(s) exceed 100 chars — consider splitting.`);
-
-  // TODO/FIXME
-  if (/TODO|FIXME|HACK/i.test(fixed)) warnings.push('Found TODO/FIXME comment(s) that still need attention.');
-
-  const status = errors.length ? 'errors' : warnings.length ? 'warnings' : 'ok';
-  const summary = status === 'ok'
-    ? 'Code is clean and well-formatted ✓'
-    : status === 'errors'
-    ? `Fixed ${errors.length} error(s). Review changes in the enhanced panel.`
-    : `No syntax errors. ${warnings.length} style warning(s) detected.`;
-
-  return { fixed, errors, warnings, tips, status, summary };
-}
-
-// ── Fix functions ──────────────────────────────────────────────
-
-function fixUnclosedStrings(code, errors) {
-  return code.split('\n').map((line, i) => {
-    const t = line.trimStart();
-    if (t.startsWith('#') || t.startsWith('//') || t.startsWith('*')) return line;
-    let inStr = null, j = 0;
-    while (j < line.length) {
-      const ch = line[j];
-      if (ch === '\\') { j += 2; continue; }
-      if (!inStr && (ch === '"' || ch === "'")) inStr = ch;
-      else if (inStr === ch) inStr = null;
-      j++;
-    }
-    if (inStr) {
-      errors.push(`Line ${i+1}: Unclosed ${inStr==='"'?'double':'single'} quote — closing quote added.`);
-      return line + inStr;
-    }
-    return line;
-  }).join('\n');
-}
-
-function fixUnclosedBrackets(code, errors) {
-  const pairs = {'(':')', '[':']', '{':'}'};
-  const closing = new Set([')', ']', '}']);
-  const stack = [];
-  let i = 0;
-  while (i < code.length) {
-    const ch = code[i];
-    if (ch === '"' || ch === "'") {
-      const q = ch; i++;
-      while (i < code.length && code[i] !== q) { if (code[i]==='\\') i++; i++; }
-    } else if (pairs[ch]) {
-      stack.push(ch);
-    } else if (closing.has(ch)) {
-      if (stack.length && pairs[stack[stack.length-1]] === ch) stack.pop();
-    }
-    i++;
-  }
-  if (stack.length) {
-    const toAdd = stack.map(c => pairs[c]).reverse().join('');
-    stack.forEach(c => errors.push(`Unclosed '${c}' bracket — '${pairs[c]}' appended at end.`));
-    return code + toAdd;
-  }
-  return code;
-}
-
-function fixPythonColons(code, errors) {
-  const re = /^\s*(if |elif |else\b|for |while |def |class |with |try\b|except\b|finally\b)/;
-  return code.split('\n').map((line, i) => {
-    if (re.test(line) && !/:\s*(#.*)?$/.test(line) && !line.trimEnd().endsWith('\\')) {
-      errors.push(`Line ${i+1}: Missing ':' after block statement — added.`);
-      return line.trimEnd() + ':';
-    }
-    return line;
-  }).join('\n');
-}
-
-function fixPythonIndent(code, warnings) {
-  if (/\t/.test(code)) {
-    warnings.push('Tabs found — converted to 4 spaces (PEP 8).');
-    return code.replace(/\t/g, '    ');
-  }
-  return code;
-}
-
-function fixJSSemicolons(code, warnings) {
-  const lines = code.split('\n');
-  let count = 0;
-  const fixed = lines.map(line => {
-    const t = line.trimEnd();
-    const s = line.trimStart();
-    if (
-      /^(const|let|var|return|throw|break|continue)\s/.test(s) &&
-      !t.endsWith(';') && !t.endsWith('{') && !t.endsWith(',') && !t.endsWith('(') &&
-      t.length > 0 && !s.startsWith('//')
-    ) { count++; return t + ';'; }
-    return line;
-  });
-  if (count) warnings.push(`Added ${count} missing semicolon(s).`);
-  return fixed.join('\n');
-}
-
-function ensureNewlineAtEnd(code) {
-  return code.endsWith('\n') ? code : code + '\n';
-}
-
-// ── UI helpers ─────────────────────────────────────────────────
-function badgeHTML(status) {
-  const m = { ok:['b-ok','✓ Clean'], warnings:['b-warn','⚠ Warnings'], errors:['b-err','✗ Errors Fixed'] };
-  const [cls, label] = m[status] || m.errors;
-  return `<span class="badge ${cls}">${label}</span>`;
-}
-
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-function showToast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2500);
+  document.getElementById('reportOut').innerHTML = rpt;
+  toast(ana.status==='ok' ? '✓ Code is clean!' : '✨ Refined!');
 }
 
 function clearAll() {
   document.getElementById('codeInput').value = '';
-  document.getElementById('enhancedOut').innerHTML = '<span class="empty">Cleaned code will appear here...</span>';
-  document.getElementById('reportOut').innerHTML   = '<span class="empty">Ready for analysis.</span>';
+  document.getElementById('enhancedOut').innerHTML = '<span class="muted">Cleaned code will appear here...</span>';
+  document.getElementById('reportOut').innerHTML   = '<span class="muted">Ready for analysis.</span>';
   document.getElementById('codeBadge').innerHTML   = '';
   document.getElementById('reportBadge').innerHTML = '';
+  lastEnhanced = '';
 }
 
 function copyEnhanced() {
-  const t = document.getElementById('enhancedOut').textContent;
-  if (!t || t.includes('Cleaned code')) { showToast('⚠️ Nothing to copy yet'); return; }
-  navigator.clipboard.writeText(t).then(() => showToast('✓ Code copied!'));
+  if (!lastEnhanced) { toast('⚠️ Nothing to copy yet'); return; }
+  navigator.clipboard.writeText(lastEnhanced).then(() => toast('✓ Code copied!'));
 }
-
 function copyPageURL() {
-  const code = encodeURIComponent(document.getElementById('codeInput').value);
-  navigator.clipboard.writeText(location.href.split('?')[0] + '?code=' + code)
-    .then(() => showToast('✓ URL copied!'));
+  const url = location.href.split('?')[0] + '?code=' + encodeURIComponent(document.getElementById('codeInput').value);
+  navigator.clipboard.writeText(url).then(() => toast('✓ URL copied!'));
 }
-
 function copyMagicLink() {
-  const t = document.getElementById('enhancedOut').textContent;
-  if (!t || t.includes('Cleaned code')) { showToast('⚠️ Enhance code first!'); return; }
-  navigator.clipboard.writeText(t).then(() => showToast('⚡ Enhanced code copied!'));
+  if (!lastEnhanced) { toast('⚠️ Enhance code first!'); return; }
+  navigator.clipboard.writeText(lastEnhanced).then(() => toast('⚡ Copied!'));
 }
 
-// Load from URL param
+function badge(status) {
+  const m = { ok:['b-ok','✓ Clean'], warnings:['b-warn','⚠ Warnings'], errors:['b-err','✗ Errors'] };
+  const [cls,lbl] = m[status]||m.errors;
+  return `<span class="badge ${cls}">${lbl}</span>`;
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2500);
+}
+
 const p = new URLSearchParams(location.search);
 if (p.get('code')) document.getElementById('codeInput').value = decodeURIComponent(p.get('code'));
 </script>
