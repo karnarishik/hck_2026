@@ -7,76 +7,45 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
-    background: #0d1117;
-    color: #e6edf3;
+    background: #0d1117; color: #e6edf3;
     font-family: 'JetBrains Mono', monospace;
-    min-height: 100vh;
-    padding: 32px 24px;
+    min-height: 100vh; padding: 32px 24px;
   }
-
-  /* ── HEADER ── */
-  .header {
-    display: flex; align-items: center; gap: 14px; margin-bottom: 24px;
-  }
+  .header { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
   .logo-icon {
     width: 42px; height: 42px;
     background: linear-gradient(135deg, #a855f7, #6366f1);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
-    box-shadow: 0 0 22px rgba(168,85,247,0.35);
+    border-radius: 10px; display: flex; align-items: center;
+    justify-content: center; font-size: 22px;
+    box-shadow: 0 0 22px rgba(168,85,247,0.4);
   }
   .logo-text {
     font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800;
     background: linear-gradient(90deg, #a855f7, #22d3ee);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   }
-
-  /* ── API KEY BAR ── */
-  .api-bar {
-    display: flex; gap: 10px; align-items: center;
-    background: #161b22; border: 1px solid #30363d;
-    border-radius: 10px; padding: 10px 14px; margin-bottom: 20px;
-  }
-  .api-bar label { font-size: 11px; color: #8b949e; white-space: nowrap; }
-  .api-bar input {
-    flex: 1; background: #0d1117; border: 1px solid #30363d;
-    border-radius: 6px; color: #e6edf3; padding: 6px 12px;
-    font-family: 'JetBrains Mono', monospace; font-size: 12px; outline: none;
-  }
-  .api-bar input:focus { border-color: #a855f7; }
-  .api-bar a {
-    font-size: 11px; color: #22d3ee; text-decoration: none; white-space: nowrap;
-  }
-  .api-bar a:hover { text-decoration: underline; }
-
-  /* ── INPUT EDITOR ── */
   .editor-wrap {
     background: #161b22; border: 1px solid #30363d;
     border-radius: 12px; overflow: hidden; margin-bottom: 20px;
     transition: border-color .2s, box-shadow .2s;
   }
   .editor-wrap:focus-within {
-    border-color: #a855f7;
-    box-shadow: 0 0 0 3px rgba(168,85,247,.2);
+    border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168,85,247,.18);
   }
   .editor-chrome {
     background: #0f1318; border-bottom: 1px solid #30363d;
     padding: 8px 16px; display: flex; align-items: center; gap: 7px;
   }
   .dot { width: 11px; height: 11px; border-radius: 50%; }
-  .dr { background: #ff5f57; } .dy { background: #ffbd2e; } .dg { background: #28c840; }
+  .dr{background:#ff5f57;} .dy{background:#ffbd2e;} .dg{background:#28c840;}
   .chrome-label { font-size: 11px; color: #8b949e; margin-left: 8px; }
   textarea {
     width: 100%; background: transparent; border: none; outline: none;
     color: #e6edf3; font-family: 'JetBrains Mono', monospace;
     font-size: 14px; line-height: 1.75; padding: 16px;
-    resize: vertical; min-height: 200px; caret-color: #a855f7;
+    resize: vertical; min-height: 220px; caret-color: #a855f7;
   }
-
-  /* ── BUTTONS ── */
   .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
   button {
     font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700;
@@ -88,114 +57,76 @@
     background: linear-gradient(135deg, #a855f7, #6366f1); color: #fff;
     box-shadow: 0 4px 16px rgba(168,85,247,.35);
   }
-  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(168,85,247,.45); }
-  .btn-primary:disabled { opacity: .65; cursor: not-allowed; }
-  .btn-sec {
-    background: #161b22; color: #e6edf3; border: 1px solid #30363d;
-  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(168,85,247,.5); }
+  .btn-sec { background: #161b22; color: #e6edf3; border: 1px solid #30363d; }
   .btn-sec:hover { border-color: #8b949e; background: #0f1318; }
   .btn-cyan {
     background: linear-gradient(135deg, #0891b2, #22d3ee); color: #0f1318; font-weight: 800;
     box-shadow: 0 4px 16px rgba(34,211,238,.25);
   }
-  .btn-cyan:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(34,211,238,.35); }
-
-  /* ── PANELS ── */
+  .btn-cyan:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(34,211,238,.4); }
   .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  @media(max-width: 680px) { .panels { grid-template-columns: 1fr; } }
-  .panel {
-    background: #161b22; border: 1px solid #30363d;
-    border-radius: 12px; overflow: hidden;
-  }
+  @media(max-width:680px){ .panels{ grid-template-columns:1fr; } }
+  .panel { background: #161b22; border: 1px solid #30363d; border-radius: 12px; overflow: hidden; }
   .panel-head {
     background: #0f1318; border-bottom: 1px solid #30363d;
     padding: 10px 16px; font-size: 11px; font-weight: 700;
     letter-spacing: .08em; display: flex; align-items: center; gap: 8px;
   }
-  .panel-left .panel-head  { color: #a855f7; border-top: 2px solid #a855f7; }
+  .panel-left  .panel-head { color: #a855f7; border-top: 2px solid #a855f7; }
   .panel-right .panel-head { color: #22d3ee; border-top: 2px solid #22d3ee; }
   .panel-body {
     padding: 16px; font-size: 13px; line-height: 1.75;
-    min-height: 160px; white-space: pre-wrap; word-break: break-word;
+    min-height: 180px; white-space: pre-wrap; word-break: break-word;
   }
-  .empty-hint { color: #8b949e; font-style: italic; }
-
-  /* copy mini-btn */
+  .empty { color: #8b949e; font-style: italic; }
   .copy-mini {
     margin-left: auto; background: none; border: 1px solid #30363d;
     color: #8b949e; padding: 3px 10px; border-radius: 6px;
-    font-size: 10px; cursor: pointer; font-family: monospace;
-    transition: all .15s; font-weight: 400;
+    font-size: 10px; cursor: pointer; font-family: monospace; font-weight: 400;
   }
   .copy-mini:hover { color: #e6edf3; border-color: #8b949e; }
-
-  /* badges */
-  .badge {
-    display: inline-block; padding: 2px 9px; border-radius: 20px;
-    font-size: 10px; font-weight: 700; letter-spacing: .05em;
-  }
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 10px; font-weight: 700; }
   .b-ok   { background: rgba(63,185,80,.15);  color: #3fb950; }
   .b-warn { background: rgba(240,197,90,.15); color: #f0c55a; }
   .b-err  { background: rgba(248,81,73,.15);  color: #f85149; }
-
-  /* report inner */
-  .rpt-summary { color: #22d3ee; font-weight: 700; margin-bottom: 12px; }
-  .rpt-section-title { font-weight: 700; margin-bottom: 6px; }
-  .rpt-item { padding-left: 12px; margin-bottom: 4px; }
-
-  /* spinner */
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .spin {
-    display: inline-block; width: 13px; height: 13px;
-    border: 2px solid rgba(255,255,255,.3); border-top-color: #fff;
-    border-radius: 50%; animation: spin .7s linear infinite;
-    margin-right: 7px; vertical-align: middle;
-  }
-
-  /* toast */
+  .rpt-ok   { color: #3fb950; }
+  .rpt-warn { color: #f0c55a; }
+  .rpt-err  { color: #f85149; }
+  .rpt-tip  { color: #22d3ee; }
+  .rpt-section { font-weight: 700; margin: 10px 0 5px; }
+  .rpt-item    { padding-left: 14px; margin-bottom: 3px; color: #e6edf3; }
   #toast {
     position: fixed; bottom: 24px; right: 24px;
     background: #161b22; border: 1px solid #30363d; color: #3fb950;
     padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600;
-    transform: translateY(60px); opacity: 0; transition: all .25s; z-index: 999;
-    pointer-events: none;
+    transform: translateY(60px); opacity: 0; transition: all .25s; z-index: 999; pointer-events: none;
   }
   #toast.show { transform: translateY(0); opacity: 1; }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header">
   <div class="logo-icon">🐍</div>
   <span class="logo-text">CodeRefine Pro</span>
 </div>
 
-<!-- API KEY -->
-<div class="api-bar">
-  <label>🔑 Anthropic API Key:</label>
-  <input type="password" id="apiKey" placeholder="sk-ant-api03-..." />
-  <a href="https://console.anthropic.com/settings/keys" target="_blank">Get key ↗</a>
-</div>
-
-<!-- EDITOR -->
 <div class="editor-wrap">
   <div class="editor-chrome">
     <div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>
-    <span class="chrome-label">input.py</span>
+    <span class="chrome-label">input.py / js / any language</span>
   </div>
-  <textarea id="codeInput" spellcheck="false" placeholder="// Paste your code here...">print('hi')</textarea>
+  <textarea id="codeInput" spellcheck="false" placeholder="Paste your code here...">print('hi</textarea>
 </div>
 
-<!-- BUTTONS -->
 <div class="btn-row">
-  <button class="btn-primary" id="refineBtn" onclick="refineCode()">✨ Refine &amp; Enhance</button>
-  <button class="btn-sec" onclick="clearAll()">🗑 Clear All</button>
-  <button class="btn-sec" onclick="copyPageURL()">🔗 Copy Page URL</button>
-  <button class="btn-cyan" onclick="copyMagicLink()">⚡ Copy Magic Link</button>
+  <button class="btn-primary" onclick="refineCode()">✨ Refine &amp; Enhance</button>
+  <button class="btn-sec"     onclick="clearAll()">🗑 Clear All</button>
+  <button class="btn-sec"     onclick="copyPageURL()">🔗 Copy Page URL</button>
+  <button class="btn-cyan"    onclick="copyMagicLink()">⚡ Copy Magic Link</button>
 </div>
 
-<!-- PANELS -->
 <div class="panels">
   <div class="panel panel-left">
     <div class="panel-head">
@@ -203,174 +134,249 @@
       <span id="codeBadge"></span>
       <button class="copy-mini" onclick="copyEnhanced()">copy</button>
     </div>
-    <div class="panel-body" id="enhancedOut">
-      <span class="empty-hint">Cleaned code will appear here...</span>
-    </div>
+    <div class="panel-body" id="enhancedOut"><span class="empty">Cleaned code will appear here...</span></div>
   </div>
-
   <div class="panel panel-right">
     <div class="panel-head">
       📊 QUALITY REPORT
       <span id="reportBadge"></span>
     </div>
-    <div class="panel-body" id="reportOut">
-      <span class="empty-hint">Ready for analysis.</span>
-    </div>
+    <div class="panel-body" id="reportOut"><span class="empty">Ready for analysis.</span></div>
   </div>
 </div>
 
 <div id="toast"></div>
 
 <script>
-  // ── helpers ──────────────────────────────────────────────────────────────
-  function toast(msg) {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 2500);
-  }
+// ══════════════════════════════════════════════
+//  CodeRefine Engine — 100% offline, no API key
+// ══════════════════════════════════════════════
 
-  function badgeHTML(status) {
-    const map = {
-      ok:       ['b-ok',   '✓ Clean'],
-      warnings: ['b-warn', '⚠ Warnings'],
-      errors:   ['b-err',  '✗ Errors'],
-    };
-    const [cls, label] = map[status] || map.errors;
-    return `<span class="badge ${cls}">${label}</span>`;
-  }
-
-  // ── main ─────────────────────────────────────────────────────────────────
-  async function refineCode() {
-    const apiKey = document.getElementById('apiKey').value.trim();
-    const code   = document.getElementById('codeInput').value.trim();
-
-    if (!apiKey) { toast('⚠️ Please enter your Anthropic API key'); return; }
-    if (!code)   { toast('⚠️ Please enter some code first'); return; }
-
-    const btn = document.getElementById('refineBtn');
-    btn.innerHTML = '<span class="spin"></span> Analyzing...';
-    btn.disabled = true;
-
-    document.getElementById('enhancedOut').innerHTML = '<span class="empty-hint">⏳ Processing...</span>';
-    document.getElementById('reportOut').innerHTML   = '<span class="empty-hint">⏳ Analyzing quality...</span>';
-    document.getElementById('codeBadge').innerHTML   = '';
-    document.getElementById('reportBadge').innerHTML = '';
-
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-opus-4-5',
-          max_tokens: 1024,
-          messages: [{
-            role: 'user',
-            content: `You are a code quality tool. Analyze and fix this code. Respond ONLY with valid JSON (no markdown, no backticks, no extra text):
-{
-  "enhanced": "<corrected and enhanced code>",
-  "status": "ok",
-  "issues": ["issue1"],
-  "tips": ["tip1"],
-  "summary": "one sentence summary"
+function detectLanguage(code) {
+  if (/^\s*(def |import |print\(|elif |self\.|from \w+ import)/m.test(code)) return 'python';
+  if (/^\s*(function |const |let |var |=>|console\.|document\.)/m.test(code)) return 'javascript';
+  if (/^\s*(<\?php|\$[a-zA-Z]|echo )/m.test(code)) return 'php';
+  if (/#include|int main|std::|cout/.test(code)) return 'cpp';
+  if (/public class|System\.out|import java/.test(code)) return 'java';
+  return 'generic';
 }
 
-status must be exactly: "ok", "warnings", or "errors".
+function refineCode() {
+  const raw = document.getElementById('codeInput').value;
+  if (!raw.trim()) { showToast('⚠️ Please enter some code first'); return; }
 
-Code to analyze:
-\`\`\`
-${code}
-\`\`\``
-          }]
-        })
-      });
+  const lang = detectLanguage(raw);
+  const result = analyze(raw, lang);
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error?.message || `HTTP ${res.status}`);
-      }
+  // ── Enhanced panel ──
+  document.getElementById('enhancedOut').textContent = result.fixed;
+  document.getElementById('codeBadge').innerHTML = badgeHTML(result.status);
 
-      const data = await res.json();
-      const raw  = data.content?.[0]?.text || '';
-      const clean = raw.replace(/```json|```/g, '').trim();
-      const result = JSON.parse(clean);
+  // ── Report panel ──
+  let html = '';
+  const sc = { ok:'rpt-ok', warnings:'rpt-warn', errors:'rpt-err' }[result.status];
+  html += `<div class="${sc} rpt-section">📝 ${esc(result.summary)}</div>`;
 
-      // Enhanced code panel
-      document.getElementById('enhancedOut').textContent = result.enhanced || code;
-      document.getElementById('codeBadge').innerHTML = badgeHTML(result.status);
+  if (result.errors.length) {
+    html += `<div class="rpt-section rpt-err">✗ Errors Fixed (${result.errors.length}):</div>`;
+    result.errors.forEach(e => { html += `<div class="rpt-item">• ${esc(e)}</div>`; });
+  }
+  if (result.warnings.length) {
+    html += `<div class="rpt-section rpt-warn">⚠ Warnings (${result.warnings.length}):</div>`;
+    result.warnings.forEach(w => { html += `<div class="rpt-item">• ${esc(w)}</div>`; });
+  }
+  if (result.tips.length) {
+    html += `<div class="rpt-section rpt-tip">💡 Tips:</div>`;
+    result.tips.forEach(t => { html += `<div class="rpt-item">${esc(t)}</div>`; });
+  }
+  if (!result.errors.length && !result.warnings.length)
+    html += `<div class="rpt-item rpt-ok">✓ No issues found — code looks great!</div>`;
 
-      // Quality report panel
-      let html = `<div class="rpt-summary">${escHtml(result.summary)}</div>`;
+  document.getElementById('reportOut').innerHTML = html;
+  document.getElementById('reportBadge').innerHTML = badgeHTML(result.status);
+}
 
-      if (result.issues?.length) {
-        html += `<div class="rpt-section-title" style="color:#f85149">Issues Found:</div>`;
-        result.issues.forEach(i => { html += `<div class="rpt-item">• ${escHtml(i)}</div>`; });
-        html += '<br>';
-      }
-      if (result.tips?.length) {
-        html += `<div class="rpt-section-title" style="color:#f0c55a">Tips:</div>`;
-        result.tips.forEach(t => { html += `<div class="rpt-item">💡 ${escHtml(t)}</div>`; });
-      }
+// ── Analysis engine ────────────────────────────────────────────
+function analyze(code, lang) {
+  let fixed = code;
+  const errors = [], warnings = [], tips = [];
 
-      document.getElementById('reportOut').innerHTML = html;
-      document.getElementById('reportBadge').innerHTML = badgeHTML(result.status);
+  fixed = fixUnclosedStrings(fixed, errors);
+  fixed = fixUnclosedBrackets(fixed, errors);
 
-    } catch (err) {
-      document.getElementById('enhancedOut').textContent = '// Error: ' + err.message;
-      document.getElementById('reportOut').innerHTML =
-        `<div style="color:#f85149">❌ ${escHtml(err.message)}</div>
-         <div style="color:#8b949e;margin-top:8px;font-size:12px">
-           Check your API key and try again.<br>
-           Make sure your key has access to the Claude API.
-         </div>`;
-      document.getElementById('codeBadge').innerHTML   = badgeHTML('errors');
-      document.getElementById('reportBadge').innerHTML = badgeHTML('errors');
+  if (lang === 'python') {
+    fixed = fixPythonColons(fixed, errors);
+    fixed = fixPythonIndent(fixed, warnings);
+    tips.push('Use 4 spaces per indent level (PEP 8).');
+    tips.push('Add docstrings to functions: """Description"""');
+    if (!/^#!/.test(fixed)) tips.push('Consider adding a shebang: #!/usr/bin/env python3');
+  }
+
+  if (lang === 'javascript') {
+    fixed = fixJSSemicolons(fixed, warnings);
+    if (/console\.log/.test(fixed)) tips.push('Remove console.log() calls before production.');
+    if (/var /.test(fixed)) tips.push('Replace var with const or let.');
+    tips.push('Use === instead of == for strict equality.');
+  }
+
+  if (lang === 'cpp' || lang === 'java') {
+    if (!/\/\/.*copyright|\/\*.*\*\//i.test(fixed)) tips.push('Add a file header comment with author and date.');
+  }
+
+  fixed = fixed.split('\n').map(l => l.trimEnd()).join('\n'); // trailing whitespace
+  fixed = fixed.replace(/\n{3,}/g, '\n\n');                  // too many blank lines
+  fixed = ensureNewlineAtEnd(fixed);
+
+  // Long lines
+  const longLines = fixed.split('\n').filter(l => l.length > 100);
+  if (longLines.length) warnings.push(`${longLines.length} line(s) exceed 100 chars — consider splitting.`);
+
+  // TODO/FIXME
+  if (/TODO|FIXME|HACK/i.test(fixed)) warnings.push('Found TODO/FIXME comment(s) that still need attention.');
+
+  const status = errors.length ? 'errors' : warnings.length ? 'warnings' : 'ok';
+  const summary = status === 'ok'
+    ? 'Code is clean and well-formatted ✓'
+    : status === 'errors'
+    ? `Fixed ${errors.length} error(s). Review changes in the enhanced panel.`
+    : `No syntax errors. ${warnings.length} style warning(s) detected.`;
+
+  return { fixed, errors, warnings, tips, status, summary };
+}
+
+// ── Fix functions ──────────────────────────────────────────────
+
+function fixUnclosedStrings(code, errors) {
+  return code.split('\n').map((line, i) => {
+    const t = line.trimStart();
+    if (t.startsWith('#') || t.startsWith('//') || t.startsWith('*')) return line;
+    let inStr = null, j = 0;
+    while (j < line.length) {
+      const ch = line[j];
+      if (ch === '\\') { j += 2; continue; }
+      if (!inStr && (ch === '"' || ch === "'")) inStr = ch;
+      else if (inStr === ch) inStr = null;
+      j++;
     }
+    if (inStr) {
+      errors.push(`Line ${i+1}: Unclosed ${inStr==='"'?'double':'single'} quote — closing quote added.`);
+      return line + inStr;
+    }
+    return line;
+  }).join('\n');
+}
 
-    btn.innerHTML = '✨ Refine &amp; Enhance';
-    btn.disabled  = false;
+function fixUnclosedBrackets(code, errors) {
+  const pairs = {'(':')', '[':']', '{':'}'};
+  const closing = new Set([')', ']', '}']);
+  const stack = [];
+  let i = 0;
+  while (i < code.length) {
+    const ch = code[i];
+    if (ch === '"' || ch === "'") {
+      const q = ch; i++;
+      while (i < code.length && code[i] !== q) { if (code[i]==='\\') i++; i++; }
+    } else if (pairs[ch]) {
+      stack.push(ch);
+    } else if (closing.has(ch)) {
+      if (stack.length && pairs[stack[stack.length-1]] === ch) stack.pop();
+    }
+    i++;
   }
-
-  function escHtml(str) {
-    return String(str)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  if (stack.length) {
+    const toAdd = stack.map(c => pairs[c]).reverse().join('');
+    stack.forEach(c => errors.push(`Unclosed '${c}' bracket — '${pairs[c]}' appended at end.`));
+    return code + toAdd;
   }
+  return code;
+}
 
-  function clearAll() {
-    document.getElementById('codeInput').value = '';
-    document.getElementById('enhancedOut').innerHTML   = '<span class="empty-hint">Cleaned code will appear here...</span>';
-    document.getElementById('reportOut').innerHTML     = '<span class="empty-hint">Ready for analysis.</span>';
-    document.getElementById('codeBadge').innerHTML     = '';
-    document.getElementById('reportBadge').innerHTML   = '';
+function fixPythonColons(code, errors) {
+  const re = /^\s*(if |elif |else\b|for |while |def |class |with |try\b|except\b|finally\b)/;
+  return code.split('\n').map((line, i) => {
+    if (re.test(line) && !/:\s*(#.*)?$/.test(line) && !line.trimEnd().endsWith('\\')) {
+      errors.push(`Line ${i+1}: Missing ':' after block statement — added.`);
+      return line.trimEnd() + ':';
+    }
+    return line;
+  }).join('\n');
+}
+
+function fixPythonIndent(code, warnings) {
+  if (/\t/.test(code)) {
+    warnings.push('Tabs found — converted to 4 spaces (PEP 8).');
+    return code.replace(/\t/g, '    ');
   }
+  return code;
+}
 
-  function copyEnhanced() {
-    const text = document.getElementById('enhancedOut').textContent;
-    if (!text || text === 'Cleaned code will appear here...') { toast('⚠️ Nothing to copy yet'); return; }
-    navigator.clipboard.writeText(text).then(() => toast('✓ Code copied!'));
-  }
+function fixJSSemicolons(code, warnings) {
+  const lines = code.split('\n');
+  let count = 0;
+  const fixed = lines.map(line => {
+    const t = line.trimEnd();
+    const s = line.trimStart();
+    if (
+      /^(const|let|var|return|throw|break|continue)\s/.test(s) &&
+      !t.endsWith(';') && !t.endsWith('{') && !t.endsWith(',') && !t.endsWith('(') &&
+      t.length > 0 && !s.startsWith('//')
+    ) { count++; return t + ';'; }
+    return line;
+  });
+  if (count) warnings.push(`Added ${count} missing semicolon(s).`);
+  return fixed.join('\n');
+}
 
-  function copyPageURL() {
-    const code = encodeURIComponent(document.getElementById('codeInput').value);
-    const url  = location.href.split('?')[0] + '?code=' + code;
-    navigator.clipboard.writeText(url).then(() => toast('✓ Page URL copied!'));
-  }
+function ensureNewlineAtEnd(code) {
+  return code.endsWith('\n') ? code : code + '\n';
+}
 
-  function copyMagicLink() {
-    const text = document.getElementById('enhancedOut').textContent;
-    if (!text || text.startsWith('Cleaned')) { toast('⚠️ Enhance code first!'); return; }
-    navigator.clipboard.writeText(text).then(() => toast('⚡ Copied to clipboard!'));
-  }
+// ── UI helpers ─────────────────────────────────────────────────
+function badgeHTML(status) {
+  const m = { ok:['b-ok','✓ Clean'], warnings:['b-warn','⚠ Warnings'], errors:['b-err','✗ Errors Fixed'] };
+  const [cls, label] = m[status] || m.errors;
+  return `<span class="badge ${cls}">${label}</span>`;
+}
 
-  // pre-fill from ?code= URL param
-  const p = new URLSearchParams(location.search);
-  if (p.get('code')) document.getElementById('codeInput').value = decodeURIComponent(p.get('code'));
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function clearAll() {
+  document.getElementById('codeInput').value = '';
+  document.getElementById('enhancedOut').innerHTML = '<span class="empty">Cleaned code will appear here...</span>';
+  document.getElementById('reportOut').innerHTML   = '<span class="empty">Ready for analysis.</span>';
+  document.getElementById('codeBadge').innerHTML   = '';
+  document.getElementById('reportBadge').innerHTML = '';
+}
+
+function copyEnhanced() {
+  const t = document.getElementById('enhancedOut').textContent;
+  if (!t || t.includes('Cleaned code')) { showToast('⚠️ Nothing to copy yet'); return; }
+  navigator.clipboard.writeText(t).then(() => showToast('✓ Code copied!'));
+}
+
+function copyPageURL() {
+  const code = encodeURIComponent(document.getElementById('codeInput').value);
+  navigator.clipboard.writeText(location.href.split('?')[0] + '?code=' + code)
+    .then(() => showToast('✓ URL copied!'));
+}
+
+function copyMagicLink() {
+  const t = document.getElementById('enhancedOut').textContent;
+  if (!t || t.includes('Cleaned code')) { showToast('⚠️ Enhance code first!'); return; }
+  navigator.clipboard.writeText(t).then(() => showToast('⚡ Enhanced code copied!'));
+}
+
+// Load from URL param
+const p = new URLSearchParams(location.search);
+if (p.get('code')) document.getElementById('codeInput').value = decodeURIComponent(p.get('code'));
 </script>
 </body>
 </html>
